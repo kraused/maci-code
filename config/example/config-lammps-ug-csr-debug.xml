@@ -1,0 +1,236 @@
+
+<!-- vi: tabstop=2:expandtab
+  -->
+
+<config>
+  <!-- Name of the configuration to distinguish build directories. If the
+  name contains slashes a directory structure will be created -->
+  <name>
+    build/lammps/ug/csr
+  </name>
+  <!-- Release and debug configurations. This global value can be
+  overwritten by the individual projects -->
+  <type>
+    Debug
+  </type>
+  <!-- On systems using the modules environment system these modules are
+  guaranteed to be loaded -->
+  <modules>
+    PrgEnv-gnu mpi goto2 ga petsc trilinos fftw/2.1.5 tau cmake svn/1.6.9 use.own swig
+  </modules>
+  <!-- Additional options can be defined which are passed to the cmake
+  program -->
+  <option>
+    <key>
+      CMAKE_C_COMPILER
+    </key>
+    <val>
+      mpicc
+    </val>
+  </option>
+  <option>
+    <key>
+      CMAKE_CXX_COMPILER
+    </key>
+    <val>
+      mpic++
+    </val>
+  </option>
+  <option>
+    <key>
+      BUILD_SHARED_LIBS
+    </key>
+    <val>
+      ON
+    </val>
+  </option>
+
+  <!-- Here comes the list of packages to be managed. Note that the order
+  of the packages matters. They are processed from top to bottom. 
+  Cyclic dependencies are not possible. -->
+  <packages>
+    <package>
+      <name>
+        wmpi
+      </name>
+      <!-- The source folder of the package. All paths must be
+      absolut. -->
+      <dir>
+        ${MACI_FOLDER}/misc/wmpi
+      </dir>
+    </package>
+    <package>
+      <name>
+        UG
+      </name>
+      <dir>
+        ${MACI_FOLDER}/misc/mscoupling
+      </dir>
+    </package>
+    <package>
+      <name>
+        mexico
+      </name>
+      <dir>
+        ${MACI_FOLDER}/mexico
+      </dir>
+      <!-- Global array library -->
+      <dependency>
+        <name>
+          GA
+        </name>
+        <include>
+          ${GA_PACKAGEROOT}/include
+        </include>
+        <lib>
+          ${GA_PACKAGEROOT}/lib;${GOTO2_PACKAGEROOT}
+        </lib>
+        <names>
+          armci;ga;ibverbs;goto2
+        </names>
+      </dependency>
+    </package>
+    <package>
+      <name>
+        maci
+      </name>
+      <dir>
+        ${MACI_FOLDER}/mexico
+      </dir>
+      <dependency>
+        <!-- Make sure that the lower/upper case matches
+        what is specified in the cmake file -->
+        <name>
+          Trilinos
+        </name>
+        <!-- these environment variables are to be
+        expanding when the cmake command is called -->
+        <include>
+          ${TRILINOS_PACKAGEROOT}/include
+        </include>
+        <lib>
+          ${TRILINOS_PACKAGEROOT}/lib
+        </lib>
+        <names>
+          epetra;epetraext;aztecoo
+        </names>
+      </dependency>
+      <dependency>
+        <name>
+          PETSc
+        </name>
+        <include>
+          ${PETSC_PACKAGEROOT}/include
+        </include>
+        <lib>
+          ${PETSC_PACKAGEROOT}/lib
+        </lib>
+        <names>
+          petsc
+        </names>
+      </dependency>
+      <dependency>
+        <name>
+          Umfpack
+        </name>
+        <include>
+          ${UMFPACK_INC}
+        </include>
+        <lib>
+          ${UMFPACK_LIB}
+        </lib>
+        <names>
+          umfpack;amd
+        </names>
+      </dependency>
+      <!-- packages can depend on other packages. In this
+      case the configure script knows the location
+      and sets the variables accordings. However, again,
+      make sure that the names match your cmake files -->
+      <dependency>
+        <name>
+          wmpi
+        </name>
+      </dependency>
+      <dependency>
+        <name>
+          UG
+        </name>
+      </dependency>
+      <dependency>
+        <name>
+          mexico
+        </name>
+      </dependency>
+      <dependency>
+        <name>
+          Lammps
+        </name>
+        <include>
+          ${LAMMPS}
+        </include>
+        <lib>
+          ${LAMMPS}
+        </lib>
+        <names>
+          lmp_linux
+        </names>
+      </dependency>
+      <dependency>
+        <name>
+          fftw
+        </name>
+        <include>
+          ${FFTW_PACKAGEROOT}/include
+        </include>
+        <lib>
+          ${FFTW_PACKAGEROOT}/lib
+        </lib>
+        <names>
+          fftw
+        </names>
+      </dependency>
+      <dependency>
+        <name>
+          TAU
+        </name>
+        <include>
+          ${TAU_PACKAGEROOT}/include
+        </include>
+        <lib>
+          ${TAU_PACKAGEROOT}/x86_64/lib
+        </lib>
+        <names>
+          TauMpi-phase-mpi-pdt-openmp;tau-phase-mpi-pdt-openmp;gomp
+        </names>
+      </dependency>
+      <dependency>
+        <name>
+          PVO
+        </name>
+        <include>
+          ${PVO_PACKAGEROOT}/include
+        </include>
+        <lib>
+          ${PVO_PACKAGEROOT}/lib
+        </lib>
+      </dependency>
+      <dependency>
+        <name>
+          GA
+        </name>
+        <include>
+          ${GA_PACKAGEROOT}/include
+        </include>
+        <lib>
+          ${GA_PACKAGEROOT}/lib;${GOTO2_PACKAGEROOT}
+        </lib>
+        <names>
+          armci;ga;ibverbs;goto2
+        </names>
+      </dependency>
+    </package>
+  </packages>
+
+</config>
+
