@@ -1,0 +1,58 @@
+//
+// Copyright (c) 2009 Institute of Computational Science, Universita della Svizzera italiana
+//
+
+/* -----------------------------------------------------------------------------
+ * Linear algebra
+ * -------------------------------------------------------------------------- */
+#cmakedefine HAVE_TRILINOS		1
+#cmakedefine HAVE_PETSC			1
+#cmakedefine HAVE_UMFPACK		1
+#cmakedefine HAVE_SPBLAS		1
+#cmakedefine HAVE_MKL			1
+#cmakedefine HAVE_OSKI			1
+
+/* -----------------------------------------------------------------------------
+ * Modules
+ * -------------------------------------------------------------------------- */
+#cmakedefine HAVE_UG			1
+#cmakedefine HAVE_TREMOLO		1
+#cmakedefine HAVE_GROMACS		1
+#cmakedefine HAVE_MDGPGPU		1
+#cmakedefine HAVE_LAMMPS		1
+
+/* -----------------------------------------------------------------------------
+ * Profiling
+ * -------------------------------------------------------------------------- */
+#cmakedefine HAVE_TAU			1
+
+/* -----------------------------------------------------------------------------
+ * I/O Libraries
+ * -------------------------------------------------------------------------- */
+#cmakedefine HAVE_PVO			1
+#cmakedefine HAVE_NETCDF		1
+
+/* -----------------------------------------------------------------------------
+ * Communication libraries (MPI, Global arrays, ...)
+ * -------------------------------------------------------------------------- */
+#cmakedefine HAVE_MPI			1
+#cmakedefine HAVE_GA			1
+
+/* -----------------------------------------------------------------------------
+ * OpenMP
+ * -------------------------------------------------------------------------- */
+#cmakedefine HAVE_OMP			1
+
+/* -----------------------------------------------------------------------------
+ * System headers
+ * -------------------------------------------------------------------------- */
+#cmakedefine HAVE_UNISTD_H		1
+#cmakedefine HAVE_STDINT_H		1
+#cmakedefine HAVE_SYS_TIME_H	1
+
+/* -----------------------------------------------------------------------------
+ * We use the share folder to store configuration files to be read by the
+ * code (e.g., for the namelists for commlib)
+ * -------------------------------------------------------------------------- */
+#define SHARE_FOLDER		"${CMAKE_INSTALL_PREFIX}/share/maci"
+
