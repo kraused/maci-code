@@ -1,0 +1,120 @@
+
+The first version of \MACI has been developed together with a suite of unit tests. However, as the complexity of the code and the relations between classes increased (in retrospective one can argue that this was mainly caused by design flaws) unit testing was abandoned. Since then, \MACI was developed without automated testing.\newline
+
+Recently, we have added a suite of regression tests to \MACI. The execution of the tests is driven by a small \PYTHON library which is controlled by a set of input files in \JSON format. Each test is a \JSON object and information about the host and the environment are read in from additional \JSON files allowing us to test different build configurations. This testing library was designed particular for parallel code like \MACI and it assumes that the execution host runs a batch system. Testing results are gathered in a report and can be send via e-mail to a responsible person.\newline
+
+Currently the test system is limited to detecting whether a run passes or fails during execution. The ability to check for correctness of output results will be added in future extensions of the system.\newline
+
+\subsection{Running the test suite}
+
+The regression tests are collected in the \lstinline[style=SHELL]|tests| folder in the \MACI trunk. The script \lstinline[style=SHELL]|testing.py| is responsible for execution of the tests:
+
+\begin{lstlisting}[style=SHELL]
+./testing.py example_env.json
+\end{lstlisting}
+
+
+It searches through the input directory (specified in the input file) for files named \lstinline[style=SHELL]|tests.json|. These files are read and for each combination of tests and number of processing elements it submits a job to the batch system. For a user specified amount of time it continuously checks the status of the submitted jobs. If either all jobs have finished or if the maximum time for testing (specified in the input file) is exceeded it aborts all unfinished jobs, creates a report and submits this report to the responsible person via e-mail.
+
+
+\subsection{Description of the environment in \JSON}
+
+In the input file to \lstinline[style=SHELL]|testing.py|, we define the ``environment'', i.e.~the executable to run, the input and output folders, which modules should be loaded before running the code and how to run parallel jobs with MPI. Below, an example for such a configuration file is given:
+
+\begin{lstlisting}[style=SHELL_SMALL,frame=lines]
+{
+  "type" : "env",
+  
+  "name" : "Name of the environment/what we are doing",
+
+  # The host configuration containing details about the
+  # execution environment
+  "host" : "/home/user/maci-code/tests/hosts/cub.json",
+
+  # The mail address of the responsible for these tests.
+  # Test results will be mailed to this address.
+  "responsible" : "dorian.krause@usi.ch",
+
+  # The input  test directory
+  "input" : "/home/user/maci-code/tests",
+	
+  # The output test directory. This directory name
+  # depends on the time of execution.
+  "output": "/home/user/out.%a-%b-%y-%H-%M",
+
+  # The MACI executable
+  "exe" : "/home/user/build/maci/lammps/debug/maci/bin/maci",
+
+  # The configuration used for building the executable. The individual
+  # items in the list can be used as "prereq" for tests so that tests
+  # which do not run with this configuration can be excluded.
+  "config" : [ "gnu", "open mpi", "lammps", "ug", "trilinos", "petsc", "spblas" ],
+	
+  # The modules to load before the executable can run
+  "modules" : [ "trilinos", "fftw/2.1.5" ],
+
+  # The maximal time (in minutes) to wait for completion of the test jobs before
+  # cancelling
+  "max_walltime" : 120,
+
+  # MPI infos. The MPI version should be in synch
+  # with the executable
+  "mpi" :
+  {
+    "type" : "open mpi",
+
+    # How to execute jobs
+    "cmd" : "mpiexec -np %npes -hostfile $PBS_NODEFILE -x OMP_NUM_THREADS=1 %exe %args"
+  }
+}
+\end{lstlisting}
+
+The \lstinline[style=SHELL]|output| and \lstinline[style=SHELL]|cmd| strings are processed by \lstinline[style=SHELL]|testing.py|. To allow for time-depenent output folders, the variables \lstinline[style=SHELL]|%a|, \lstinline[style=SHELL]|%b|, \lstinline[style=SHELL]|%y|, \lstinline[style=SHELL]|%H| and \lstinline[style=SHELL]|%M| are replaced by the name of the current day, current month, the year, the hour and the minute, resp. Similar, in the \MPI \lstinline[style=SHELL]|cmd| string, \lstinline[style=SHELL]|%npes| is replaced by the number of processing elements requested (note that currently there is no support for hybrid execution), \lstinline[style=SHELL]|%exe| is replaced by the name of the exectutable and \lstinline[style=SHELL]|%args| by the input arguments to the executable.
+
+It is important to note that the value \lstinline[style=SHELL]|max_walltime| is not the maximum walltime for the individual jobs but for the whole testing process. It should be chosen larger than the execution plus the anticipated queueing time for the jobs.
+
+\subsection{Description of a host in \JSON}
+
+In the host file, all information about the execution host are collected. An example is shown below:
+
+\begin{lstlisting}[style=SHELL_SMALL,frame=lines]
+{
+  "type"  : "host",
+  
+  # The identifier for the host
+  "host"  : "cub.inf.usi.ch",
+
+  # The batch system on the host
+  "batch" :
+  {
+    "type" : "pbs",
+
+    # Define the executable interface
+    "sub"  : "qsub -lnodes=$(max(1,int(%npe/8))):ppn=$(min(%npe,8)),vmem=$(2*min(%npe,8))gb,walltime=%wtime -joe -N %name %script",
+    "del"  : "qdel  %jobid",
+    "stat" : "qstat %jobid"
+  },
+
+  # The command used to send mails
+  "sendmail" : "mail -s \"%subject\" %recipient < %file"
+}
+\end{lstlisting}
+
+Note that the definition of the \lstinline[style=SHELL]|sub| member of \lstinline[style=SHELL]|batch| is allowed to contain simple formulas which are evaluated by the testing library. Each expression between \lstinline[style=SHELL]|$(| and the matching \lstinline[style=SHELL]|)| will be evaluated by the python parser. This ability is currently only enabled for the \lstinline[style=SHELL]|sub| string but can be easily applied to other strings, too. 
+
+\subsection{Description of a test in \JSON}
+
+Tests are defined in \JSON files with the name \lstinline[style=SHELL]|tests.json|. In each file, multiple tests can be defined. Each test is it's own \JSON object:
+
+\begin{lstlisting}[style=SHELL_SMALL,frame=lines]
+{
+  "name" : "Unique_name_for_test",
+  "descr" : "Short human readable description",
+  "npes" : [ 1, 8 ],
+  "arguments" : "--input_path \"%pwd:%pwd/XYZ\" in.py in2.xml",
+  "output" : [ "out.dat", "other_out.dat" ],
+  "prereq" : [ "lammps", "ug", "trilinos" ]
+}
+\end{lstlisting}
+
+Each \JSON test object must have a unique name. For each number in the \lstinline[style=SHELL]|npes| array, one job with the specified number of processing elements is submitted. While the executable is specified in the testing environment, each test can define its own arguments. The string is processed and the variable \lstinline[style=SHELL]|%pwd| is replaced by the folder containing the \lstinline[style=SHELL]|tests.json| file. The \lstinline[style=SHELL]|out| member is currently unused but is intended to be used for \lstinline[style=SHELL]|diff|'ing with reference output. The members of the \lstinline[style=SHELL]|prereq| array are compared to the \lstinline[style=SHELL]|config| array in the environment definition and only if all prerequisites are fulfilled the test will run.

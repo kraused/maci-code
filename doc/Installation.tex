@@ -1,0 +1,340 @@
+
+\subsection{System Requirements}
+
+\MACI is written in portable \CPP and should be usable on any Unix flavor. \MACI has been successfully compiled and run on Linux and Mac Os X.
+
+\subsection{Dependencies}
+
+\MACI has the following dependencies on external software:
+
+\begin{center}
+\tablefirsthead{%
+\hline
+\textbf{Name} & \textbf{Req} & \textbf{Description} & \textbf{Comment}\\
+\hline
+}
+\tabletail{%
+\hline
+}
+
+\begin{supertabular}[h]{|p{0.1\linewidth}|p{0.05\linewidth}|p{0.25\linewidth}|p{0.5\linewidth}|}
+\CMAKE  & \EXTSOFTREQYES & Build System & \CMAKE is used for the core library and many sub-projects and external packages used in \MACI.\\
+\hline
+\SWIG   & \EXTSOFTREQYES & Creates Wrapper & Creates \PYTHON interface automatic from \CPP code.\\
+\hline
+\PYTHON & \EXTSOFTREQYES & Interpreter & Required to drive simulation.\\
+\hline
+\WMPI   & \EXTSOFTREQYES & Wrapped MPI & A tiny \PYTHON module providing a limited set of \MPI functionality on the scripting level. This module is part of the \MACI repository.\\
+\hline
+\SPBLAS & \EXTSOFTREQYES & Sparse BLAS & The current \MACI version depends on Sparse BLAS. Unfortunately, there are few (the authors are not aware of any) standard conforming high-performance implementations available. In future versions, a Sparse BLAS implementation will be optional and other packages, such as Intel's \MKL and Berkeley \OSKI will be usable.\\
+\hline
+\TRILINOS & \EXTSOFTREQNO & Linear Algebra Package & Provides parallel solver routines for the computation of Lagrange multipliers.\\
+\hline
+\PETSC & \EXTSOFTREQNO & Linear Algebra Package & Provides parallel solver routines for the computation of Lagrange multipliers.\\
+\hline
+\UMFPACK & \EXTSOFTREQNO & Direct Solver & Provides solver routines for the computation of Lagrange multipliers. This solver can only be used if each connected component of the handshake region is fully contained in the domain of a single processor.\\
+\hline
+\UG & \EXTSOFTREQYES & FE code & Currently only the \UG (or \OBSLIB, resp.) code implements the interface to \MACI. In fact, the FE interface of \MACI is a copy of the \UG interface implemented in the \MSCOUPLING code.\\
+\hline
+\LAMMPS & \EXTSOFTREQNO & MD code & Sandia's Open Source Molecular Dynamics Code. Very few changes to \LAMMPS are necessary to allow for linking it with the \MACI interface (see below).\\
+\hline
+\TREMOLO & \EXTSOFTREQNO & MD code & \TREMOLO is developed at the University of Bonn by the Group of Prof.~Griebel. It has been the only MD code usable with \MACI for a long time. The interface has been developed during an internship of the first author at the JSC J\"ulich and has lower code quality than the majority of the \MACI code. Many changes to the \TREMOLO code were necessary, rendering our \TREMOLO version incompatible with the official version. \LAMMPS is now the recommended MD code to use with \MACI but there are still features of the MD interface (such as stress calculations) which are only available with \TREMOLO. \\
+\end{supertabular}
+\end{center}
+
+Note that either \TRILINOS, \PETSC or \UMFPACK are required. It is possible to link against all of these libraries at the same time and chose the solver at runtime. Similarly, either \LAMMPS, \TREMOLO or \MDGPGPU are required for a successful build. However, \MACI only supports compilation with exactly one of these codes. The same limitation applies to the FE code(s).
+
+\subsection{Component Locations}
+
+The different \MACI components and dependencies can be retrieved as follows:
+
+\begin{center}
+\tablefirsthead{%
+\hline
+\textbf{Name} & \textbf{Location} & \textbf{Description and Comments}\\
+\hline
+}
+\tabletail{%
+\hline
+}
+
+\begin{supertabular}[h]{|p{0.125\linewidth}|p{0.4\linewidth}|p{0.4\linewidth}|}
+\CMAKE    & \href{http://www.cmake.org}{http://www.cmake.org} & It is recommended to use \CMAKE version 2.8 or later.\\
+\hline
+\SWIG     & \href{http://www.swig.org}{http://www.swig.org} & Tested with version 1.3.40.\\
+\hline
+\PYTHON   & \href{http://www.python.org}{http://www.python.org} & \PYTHON is installed on most Linux systems. \MACI has been used mainly with version 2.4.3.\\
+\hline
+\WMPI     & \href{https://github.com/kraused/maci-code.git}{https://github.com/kraused/maci-code.git} &\\
+\hline
+\SPBLAS     & \href{http://math.nist.gov/spblas}{http://math.nist.gov/spblas} & NIST provides an un-optimized reference implementation of Sparse-BLAS.\\
+\hline
+\TRILINOS & \href{http://trilinos.sandia.gov}{http://trilinos.sandia.gov} & \TRILINOS is installed on many clusters and supercomputers.\\
+\hline
+\PETSC    & \href{http://www.mcs.anl.gov/petsc}{http://www.mcs.anl.gov/petsc} & \PETSC is installed on many clusters and supercomputers.\\
+\hline
+\UG and \MSCOUPLING & Upon request & The \MSCOUPLING package is a wrapper around the \UG datastructure which also implements linear elasticity and Cauchy-Born based elasticity. \MSCOUPLING is not compatible with the current trunk version of \UG.\\
+\hline
+\LAMMPS   & \href{http://lammps.sandia.gov}{http://lammps.sandia.gov} & Small modifications are necessary to use \LAMMPS with \MACI (see below).\\
+\hline
+\TREMOLO  & Upon request & The directory includes the modified \TREMOLO sources and the interface layer.\\
+\hline
+\MACI     & \href{https://github.com/kraused/maci-code.git}{https://github.com/kraused/maci-code.git} &\\
+\end{supertabular}
+\end{center}
+
+\subsection{Shared Libraries}
+
+As explained earlier, \MACI is driven by a collection of \PYTHON modules and \PYTHON scripts. A \PYTHON module is a dynamic shared object (DSO), i.e.~a shared library on Linux systems. It is therefor important to build \PYTHON modules as shared libraries and all other (external) as position-independent code. For project components which use \CMAKE as their build system, the flag
+\begin{lstlisting}[style=SHELL]
+	-DBUILD_SHARED_LIBS:BOOL=ON
+\end{lstlisting}
+to the \CMAKE arguments. For other software (such as \LAMMPS) it should be ensured that \lstinline[style=CODE]|-fPIC| is part of the compilation and linking flags. This ensures that position-independent code is created.
+
+It should be pointed out that there are a couple of problems associated with the extensive usage of DSOs in scientific applications like \MACI:
+\begin{itemize}
+\item There is limited or no support for DSOs on High-End Computing platforms (e.g., the Cray~XT architecture). The authors decision to use the \PYTHON language was majorly influenced by the support of this scripting language on the IBM BlueGene architecture. However, \MACI has not been tested on BlueGene.
+\item On heavily loaded systems, the execution time can grow substantially due to the need to load various DSOs.
+\item There is an increase in complexity associated with the management of many shared libraries.
+\end{itemize} 
+
+\subsection{Building \LAMMPS}
+
+Here, we describe how to set-up \LAMMPS such that it can be used with \MACI.
+
+\begin{enumerate}
+\item Download a fresh \LAMMPS version from the Sandia page.
+
+\item The next step is to adapt one of the \lstinline[style=SHELL]|MAKE/Makefile.XYZ| files. Here, we use \lstinline[style= SHELL]|Makefile.linux|. For this purpose we apply the following patch (shorted for editorial reasons):
+
+\vspace{1pt}
+\begin{lstlisting}[style=SHELL_SMALL,frame=lines]
+--- MAKE/Makefile.linux	2010-07-13 16:00:15.000000000 +0200
++++ MAKE/Makefile.linux	2010-07-29 22:13:39.000000000 +0200
+@@ -6,10 +6,10 @@
+-CC =		icc
+-CCFLAGS =	-O
++CC =		mpicxx
++CCFLAGS =	-O -fPIC
+ DEPFLAGS =	-M
+-LINK =		icc
+-LINKFLAGS =	-O
++LINK =		mpicxx
++LINKFLAGS =	-O -fPIC
+
+@@ -29,18 +29,18 @@
+-MPI_INC =       -DMPICH_SKIP_MPICXX 
++MPI_INC = 
+ MPI_PATH = 
+-MPI_LIB =	-lmpich -lpthread
++MPI_LIB =
+ 
+-FFT_INC =       -DFFT_FFTW
+-FFT_PATH = 
+-FFT_LIB =	-lfftw
++FFT_INC = $(FFTW_POST_COMPILE_OPTS) -DFFT_FFTW
++FFT_PATH =
++FFT_LIB = $(FFTW_POST_LINK_OPTS)
+\end{lstlisting}
+
+The necessary changes depend on the system configuration. Here, we choose the \MPI compiler wrapper and use the environment variables \lstinline[style=SHELL]|FFTW_POST_XYZ_OPTS| which are set by the \lstinline[style=SHELL]|fftw/2.1.5| module on this system. It is now possible to compile the \LAMMPS libraries using
+
+\begin{lstlisting}[style=SHELL]
+% make makelib
+% make -f Makefile.lib linux
+\end{lstlisting}
+
+However, compiling \MACI with this \LAMMPS version will not yet succeed.
+
+\item The next step is to apply some modifications to the \LAMMPS source code. First we must add a pointer for the piggyback data to the \lstinline[style=CODE]|Atom| class:
+
+\vspace{1pt}
+\begin{lstlisting}[style=CODE_SMALL,frame=lines]
+--- atom.h	2010-01-14 20:44:09.000000000 +0100
++++ atom.h	2010-07-29 22:37:11.000000000 +0200
+@@ -105,6 +105,10 @@
+ 
++  /* ---------- MACI ---------- */
++  void* pb;
++  /* ---------- MACI ---------- */
++
+   // functions
+ 
+   Atom(class LAMMPS *);
+\end{lstlisting}
+
+Moreover, we need to modify \lstinline[style=SHELL]|atom.cpp| to add some callbacks.
+
+\vspace{1pt}
+\begin{lstlisting}[style=CODE_SMALL,frame=lines]
+--- atom.cpp	2010-06-18 21:49:12.000000000 +0200
++++ atom.cpp	2010-07-29 23:00:33.000000000 +0200
+@@ -260,6 +260,11 @@
+    generate an AtomVec class
+ ------------------------------------------------------------------------- */
+ 
++/* ---------- MACI ---------- */
++AtomVec *(*NewAtomVecMultiscaleAtomicCB)(LAMMPS *, int, char **) = 0;
++AtomVec *(*NewAtomVecMultiscaleFullCB)(LAMMPS *, int, char **) = 0;
++/* ---------- MACI ---------- */
++
+ AtomVec *Atom::new_avec(const char *style, int narg, char **arg)
+ {
+   if (0) return NULL;
+@@ -270,6 +275,13 @@
+ #include "style_atom.h"
+ #undef ATOM_CLASS
+ 
++  /* ---------- MACI ---------- */
++  else if (0 == strcmp(style,"multiscale_atomic")) 
++        return NewAtomVecMultiscaleAtomicCB(lmp, narg, arg);
++  else if (0 == strcmp(style,"multiscale_full")) 
++        return NewAtomVecMultiscaleFullCB(lmp, narg, arg);
++  /* ---------- MACI ---------- */
++
+   else error->all("Invalid atom style");
+   return NULL;
+ }
+\end{lstlisting}
+
+Similarly, \lstinline[style=SHELL]|modify.cpp| must be modified:
+
+\vspace{1pt}
+\begin{lstlisting}[style=CODE_SMALL,frame=lines]
+--- modify.cpp	2010-07-16 01:23:37.000000000 +0200
++++ modify.cpp	2010-07-29 23:02:47.000000000 +0200
+@@ -542,6 +542,11 @@
+    add a new fix or replace one with same ID
+ ------------------------------------------------------------------------- */
+ 
++/* ---------- MACI ---------- */
++Fix *(*NewRattleIntegratorCB)(LAMMPS *, int, char **) = 0;
++Fix *(*NewVerletIntegratorCB)(LAMMPS *, int, char **) = 0;
++/* ---------- MACI ---------- */
++
+ void Modify::add_fix(int narg, char **arg)
+ {
+   if (domain->box_exist == 0) 
+@@ -598,6 +603,13 @@
+ #include "style_fix.h"
+ #undef FIX_CLASS
+ 
++/* ---------- MACI ---------- */
++  else if (0 == strcmp(arg[2],"multiscale_RattleIntegrator")) 
++        fix[ifix] = NewRattleIntegratorCB(lmp, narg, arg);
++  else if (0 == strcmp(arg[2],"multiscale_VerletIntegrator")) 
++        fix[ifix] = NewVerletIntegratorCB(lmp, narg, arg);
++/* ---------- MACI ---------- */
++
+   else error->all("Invalid fix style");
+ 
+   // if fix is new, set it's mask values and increment nfix
+\end{lstlisting}
+\item With these modifications it is possible to build \LAMMPS and link with \MACI. A patch for \LAMMPS can also be found in the \MACI code at \lstinline[style=SHELL]|md/lammps/src/lammps-XYZ.patch|. However, typically such a patch will not be valid for a different \LAMMPS version.
+\end{enumerate}
+
+\subsection{Manual installation with \CMAKE}
+
+If all components have been build (and eventually installed) it is possible to configure and build \MACI. The correct command line is
+
+\begin{lstlisting}[style=SHELL]
+% cmake -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_BUILD_TYPE:STRING=Debug \
+        -DCMAKE_INSTALL_PREFIX:STRING=<INSTALL DIRECTORY> \
+        -DTrilinos_INCLUDE_DIR:STRING=$TRILINOS_PACKAGEROOT/include \
+        -DTrilinos_LIB_DIR:STRING=$TRILINOS_PACKAGEROOT/lib \
+        -DPETSc_INCLUDE_DIR:STRING=$PETSC_PACKAGEROOT/include \
+        -DPETSc_LIB_DIR:STRING=$PETSC_PACKAGEROOT/lib \
+        (add UG, Lammps, Sparse BLAS, UMFPACK etc.) \
+        <PATH TO MACI>
+\end{lstlisting}
+
+With this command a \lstinline[style=SHELL]|Debug| version of the code is build (i.e.~without optimization). For production runs, the \lstinline[style=SHELL]|Release| build type should be used.
+
+Packages will be added to the build if they are found by \CMAKE. This requires the definition of \lstinline[style=SHELL]|XYZ_INCLUDE_DIR| and \lstinline[style=SHELL]|XYZ_LIB_DIR| as arguments to \CMAKE.
+
+To use \MACI it \textbf{must} be installed to a second directory. The installation will create the folders \lstinline[style=SHELL]|$CMAKE_INSTALL_PREFIX/bin|, \lstinline[style=SHELL]|$CMAKE_INSTALL_PREFIX/lib/maci| and \lstinline[style=SHELL]|$CMAKE_INSTALL_PREFIX/share/maci|. In the \lstinline[style=SHELL]|bin| folder, the executable \lstinline[style=SHELL]|maci.exe| and the wrapper \lstinline[style=SHELL]|maci| are placed.
+
+Using a build system like \CMAKE to maintain the various components of a \MACI installation can be tedious, especially if different code versions are to be maintained at the same time. Therefore we have developed \BUILDPY, a small application, which allows for maintaining and building \MACI and its components.
+
+\subsection{Simplified Installation with \BUILDPY}
+
+The \PYTHON script \BUILDPY should simplify the task of maintaining a modular code basis. It is very generic and can be also used to  maintain other software than \MACI as long as this software is \CMAKE based. \BUILDPY takes a high-level \XML description of the code as input. The \XML file describes the packages and dependencies. It also allows to include external packages.
+
+The following \XML file describes a project containing three packages \lstinline[style=XML]|A|, \lstinline[style=XML]|B| and \lstinline[style=XML]|C|, where \lstinline[style=XML]|A| and \lstinline[style=XML]|B| are \CMAKE project and \lstinline[style=XML]|C| is an external project with a module file. In this example \lstinline[style=XML]|A| depends on \lstinline[style=XML]|B| and \lstinline[style=XML]|C|. We see that \BUILDPY supports the module evironment and can read environment variables.
+
+\vspace{1pt}
+\begin{lstlisting}[style=XML_SMALL,frame=lines]
+<config>
+	<!-- Name of the configuration to distinguish build directories. If the
+	     name contains slashes a directory structure will be created -->
+	<name>
+		A_with_B/also_with_C
+	</name>
+	<!-- Release or Debug configurations. This global value can be
+	     overwritten by the individual projects -->
+	<type>
+		Debug
+	</type>
+	<!-- On systems using the modules environment system these modules
+	     (and only these) are guaranteed to be loaded -->
+	<modules>
+		C/2.0.1
+	</modules>
+	<!-- Additional options can be defined which are passed to the cmake
+	     program -->
+	<option>
+		<key>
+			BUILD_SHARED_LIBS:BOOL
+		</key>
+		<val>
+			ON
+		</val>
+	</option>
+
+	<!-- Here comes the list of packages to be managed. Note that the order
+	     of the packages matters. They are processed from top to bottom. 
+	     Cyclic dependencies are not possible. -->
+	<packages>
+		<package>
+			<name>
+				B
+			</name>
+			<!-- The source folder of the package. All paths must be
+			     absolut. -->
+			<dir>
+				${path_to_B}
+			</dir>
+		</package>
+		<package>
+			<name>
+				A
+			</name>
+			<!-- The source folder of the package. All paths must be
+			     absolut. -->
+			<dir>
+				${path_to_A}
+			</dir>
+			<dependency>
+				<name>
+					B
+				</name>
+			</dependency>
+			<dependency>
+				<name>
+					C
+				</name>
+				<include>
+					${C_PACKAGEROOT}/include
+				</include>
+				<lib>
+					${C_PACKAGEROOT}/lib
+				</lib>
+			</dependency>
+		</package>
+\end{lstlisting}
+
+\BUILDPY assumes that each package provides \lstinline[style=SHELL]|INSTALL()| commands which copy all include files to the folder \lstinline[style=SHELL]|$CMAKE_INSTALL_PREFIX/include| and all libraries to \lstinline[style=SHELL]|$CMAKE_INSTALL_PREFIX/lib| (this is not necessary for projects on which no other project depend). It installs the package in the local folder, i.e.~\lstinline[style=XML]|C| would be installed in \lstinline[style=SHELL]|A_with_B/also_with_C/C|.
+
+It should be noted that \BUILDPY is a rather small program and only implements those features required for a successful build of \MACI. For example, it does not support individual option lines for the packages. However, it is easily possible to enhance \BUILDPY for this purpose.
+
+We collect configuration files for different hosts in the \lstinline[style=SHELL]|config| folder in the \MACI repository. These files can serve as guidelines for creating configuration for new hosts. The most recent versions for each host should be collected in this directory. 

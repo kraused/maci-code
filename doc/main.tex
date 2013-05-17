@@ -1,0 +1,135 @@
+\documentclass[12pt,fleqn]{article}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+\usepackage{xspace}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{relsize}
+\usepackage{supertabular}
+\usepackage{hyperref}
+\usepackage{colortbl}
+
+\usepackage{listings}
+
+\RequirePackage[super,comma,sort&compress]{natbib}
+\citestyle{nature}
+
+\lstdefinestyle{SHELL}
+{ %
+	language=Bash,
+	basicstyle=\ttfamily\smaller
+} %
+
+\lstdefinestyle{SHELL_SMALL}
+{ %
+	language=Bash,
+	basicstyle=\ttfamily\relsize{-2},
+	breaklines=true,
+	breakatwhitespace=true
+} %
+ 
+\lstdefinestyle{CODE}
+{ %
+	language=C++,
+	basicstyle=\ttfamily\smaller
+} %
+ 
+\lstdefinestyle{CODE_SMALL}
+{ %
+	language=C++,
+	basicstyle=\ttfamily\relsize{-2}
+} %
+
+\lstdefinestyle{XML}
+{ %
+	language=XML,
+	basicstyle=\ttfamily\relsize{-2}
+} %
+
+\lstdefinestyle{XML_SMALL}
+{ %
+	language=XML,
+	basicstyle=\ttfamily\relsize{-2}
+} %
+
+\lstdefinestyle{PYTHON}
+{ %
+	language=Python,
+	basicstyle=\ttfamily\smaller
+} %
+ 
+\lstdefinestyle{PYTHON_SMALL}
+{ %
+	language=Python,
+	basicstyle=\ttfamily\relsize{-2}
+} %
+
+\usepackage[bitstream-charter]{mathdesign}
+
+% Stolen from scientific word
+\setlength{\topmargin}     {-1.0in}
+\setlength{\textheight}    {9.25in}
+\setlength{\oddsidemargin} {0.0in}
+\setlength{\evensidemargin}{0.0in}
+\setlength{\textwidth}     {6.5in}
+
+% Italic uppercase greek letters
+\DeclareMathSymbol{\Gamma  }{\mathalpha}{letters}{"00}
+\DeclareMathSymbol{\Delta  }{\mathalpha}{letters}{"01}
+\DeclareMathSymbol{\Theta  }{\mathalpha}{letters}{"02}
+\DeclareMathSymbol{\Lambda }{\mathalpha}{letters}{"03}
+\DeclareMathSymbol{\Xi     }{\mathalpha}{letters}{"04}
+\DeclareMathSymbol{\Pi     }{\mathalpha}{letters}{"05}
+\DeclareMathSymbol{\Sigma  }{\mathalpha}{letters}{"06}
+\DeclareMathSymbol{\Upsilon}{\mathalpha}{letters}{"07}
+\DeclareMathSymbol{\Phi    }{\mathalpha}{letters}{"08}
+\DeclareMathSymbol{\Psi    }{\mathalpha}{letters}{"09}
+\DeclareMathSymbol{\Omega  }{\mathalpha}{letters}{"0A}
+
+\input{Commands}
+
+\begin{document}
+\begin{center}
+{\Large\bf MACI User Guide}
+\vspace{0.1cm}\\
+{\bf Dorian Krause$^{\dagger}$ and 
+	 Rolf Krause$^{\diamond}$}
+\vspace{0.1cm}\\
+{$^{\dagger}$Institute of Computational Science\\
+Universit\`{a} della Svizzera Italiana, Via Guiseppe Buffi 6, CH-6900 Lugano\\
+e-mail: dorian.krause@usi.ch}\linebreak\\
+{$^{\diamond}$Institute of Computational Science\\
+Universit\`{a} della Svizzera Italiana, Via Guiseppe Buffi 6, CH-6900 Lugano\\
+e-mail: rolf.krause@usi.ch}
+\end  {center}
+
+\noindent\textbf{Last Update:}\quad\today
+
+\section{Introduction}
+\input  {Introduction}
+
+\section{Overview}
+\input  {Overview}
+
+\section{Installation}
+\input  {Installation}
+
+\section{Running \MACI}
+\input  {Running_MACI}
+
+\section{Description of the \PYTHON interface}
+\input  {Description_Script}
+
+\section{Description of the \XML Format}
+\input  {Description_XML}
+
+\section{Regression Testing Framework \label{sect:Regression_Testing}}
+\input  {Regression_Testing}
+
+\bibliographystyle{plainnat}
+\bibliography{main}
+
+\end{document}

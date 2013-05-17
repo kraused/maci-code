@@ -1,0 +1,81 @@
+
+As mentioned earlier \MACI is run by a combination of \PYTHON scripts and \XML specification files. In this section, we describe the \MACI core library implemented in \PYTHON.\newline
+
+The \MACI core library is available to user scripts by the name \lstinline[style=SHELL]|maci|. The module \textbf{must not} be imported explicitly.  \lstinline[style=SHELL]|maci| as well as the \lstinline[style=SHELL]|mpi| module (which is implemented in \WMPI) are preloaded by the \MACI executable. 
+
+\subsection{Running MD and FE simulations}
+
+The following example shows how we can easily run a molecular dynamics simulation using the \MACI interface:
+
+\begin{lstlisting}[style=PYTHON_SMALL,frame=lines]
+here = maci.ProcElement(mpi.world, maci.SPECFILE)
+tk   = maci.MDToolkit  (mpi.world, maci.SPECFILE)
+here.init(tk)
+
+tk.init()
+tk.createInitialWave()
+
+verlet = maci.VerletIntegrator(here, tk, maci.SPECFILE)
+verlet.run()
+\end{lstlisting}
+
+The script starts by creating an instance \lstinline[style=PYTHON]|here| of type \lstinline[style=PYTHON]|maci.ProcElement|. The constructor of \lstinline[style=PYTHON]|maci.ProcElement| takes two arguments: First, it requires a communicator which normally will be \lstinline[style=PYTHON]|mpi.world| (the \PYTHON-level equivalent to \lstinline[style=CODE]|MPI_COMM_WORLD|). The second argument is the specification file \lstinline[style=PYTHON]|maci.SPECFILE| which is passed to the executable. The \lstinline[style=PYTHON]|maci.ProcElement| collects information about the processing element such as it's task (whether it runs MD or FE).
+
+The next step is to set up a ``toolkit''. Here, we run a pure Molecular Dynamics simulation and hence create an instance of \lstinline[style=PYTHON]|maci.MDToolkit| on all processing elements. 
+
+Once we have created the instances \lstinline[style=PYTHON]|here| and \lstinline[style=PYTHON]|tk| we need to initialize both. Also, we create an initial wave as starting conditions. 
+
+Lastly, we create an instance of \lstinline[style=PYTHON]|maci.VerletIntegrator| to perform the time integration and call its \lstinline[style=PYTHON]|run()| member function which performs the time integration.\newline
+
+This small examples shows that only a couple of lines are required to run a (parallel) simulation with \MACI. Of course, complexity cannot be completely hidden in the core library. For this example, the \XML input file (which we discuss in the next section) must specify the missing parameters for the simulation.\newline
+
+In order to run the same wave propagation example with Finite Elements, it is only necessary to replace \lstinline[style=PYTHON]|maci.MDToolkit| by \lstinline[style=PYTHON]|maci.FEToolkit|.\newline
+
+\subsection{Running Coupled Simulations}
+
+The following example (taken from the \lstinline[style=SHELL]|CRACK| regression test in \MACI) shows an example of a coupled simulation:
+
+\begin{lstlisting}[style=PYTHON_SMALL,frame=lines]
+# Boundary forces. This is a bit tedious
+# since they cannot be defined "generic"
+# (without knowing the size of the grid)
+def g(x,y,z):
+        if x > 278.5:
+                return [ +0.5, 0.0, 0.0 ]
+        if x < -0.5:
+                return [ -0.5, 0.0, 0.0 ]
+        return [ 0.0, 0.0, 0.0 ]
+
+
+here = maci.ProcElement(mpi.world, maci.SPECFILE)
+if maci.ProcMD == here.mytype():
+        tk = maci.MDToolkit(here.comm, maci.SPECFILE)
+        here.init(tk)
+else:
+        tk = maci.FEToolkit(here.comm, maci.SPECFILE)
+        here.init(tk)
+
+hs = maci.HandshakeGeoDescr(here, maci.SPECFILE)
+
+if maci.ProcMD == here.mytype():
+        tk.init()
+if maci.ProcFE == here.mytype():
+        tk.init(hs.weight)
+        tk.addSurfaceForce(g)
+
+
+rattle = maci.RattleIntegrator(here, hs, tk, maci.SPECFILE)
+rattle.run()
+\end{lstlisting}
+
+As in the previous example, we start by instantiating \lstinline[style=PYTHON]|maci.ProcElement|. Depending on the type of the processing element (which can be queried with the \lstinline[style=PYTHON]|mytype()| member function), we create an instance of \lstinline[style=PYTHON]|maci.MDToolkit| or \lstinline[style=PYTHON]|maci.FEToolkit|. The decision whether a processing element is of type \lstinline[style=PYTHON]|maci.ProcMD| or \lstinline[style=PYTHON]|maci.ProcFE| is guided by the \XML input file.\newline
+
+In the next step, before initializing \lstinline[style=PYTHON]|tk| we create an instance of \lstinline[style=PYTHON]|maci.HandshakeGeoDescr| which (as the name suggests) is a description of the handshake geometry. More precisely, \lstinline[style=PYTHON]|maci.HandshakeGeoDescr| stores all information about the geometric primitives which constitute the handshake region (currently we only support cuboidal primitives) as well as the value of the weighting function at the boundary (so that it can be interpolated for interior points). It is important to notice that \lstinline[style=PYTHON]|hs.weight| differs on MD and FE processing elements, i.e.~\lstinline[style=PYTHON]|maci.HandshakeGeoDescr| computes the correct (consistent) weighting depending on the task of the processing element.\newline
+
+Lastly, we initialize the toolkits (note that the weight must be passed to the \lstinline[style=PYTHON]|maci.FEToolkit| instance,~since the weighting must be known for assembling mass matrices, etc.), create an instance of \lstinline[style=PYTHON]|maci.RattleIntegrator| and call the \lstinline[style=PYTHON]|run()| routine. As the name suggests, implements \lstinline[style=PYTHON]|maci.RattleIntegrator| the RATTLE time integrator for Differential Algebraic Equations (DAEs).\newline
+
+In this example, we also define a surface force term for the FE equation of motions. In the current version of \MACI, this is done by defining a function \lstinline[style=PYTHON]|g| which takes three coordinate values as arguments and returns the applied force. The function can be registered with the \lstinline[style=PYTHON]|addSurfaceForce()| function.
+
+Currently, surface points cannot be identified by means other than their spatial coordinates. This means that it is not possible to transfer the definition of \lstinline[style=PYTHON]|g| to another geometry without modifying the values (\lstinline[style=PYTHON]|278.5| and \lstinline[style=PYTHON]|-0.5|) which define the boundary, to which the external force should be applied.\newline
+
+The classes \lstinline[style=PYTHON]|maci.ProcElement|, \lstinline[style=PYTHON]|maci.HandshakeGeoDescr| and \lstinline[style=PYTHON]|maci.RattleIntegrator| are implemented in the core library based on the \MACI \CPP library. They export only a small number of functions that should be used by users (basically, the two examples depicted above cover all the functionality that is needed in the first place) and advanced users will likely need to implement new functionality in the \MACI core library. In \ref{sect:Code_Description}, we will discuss the structure of the code and how to add new functionality.
