@@ -1,6 +1,3 @@
-//
-/// Copyright (c) 2009 Institute of Computational Science, Universita della Svizzera italiana
-//
 
 // vi: tabstop=4:expandtab
 
