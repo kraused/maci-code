@@ -12,6 +12,10 @@
 #include "md/lammps/lammps.hh"
 #endif
 
+#ifdef HAVE_TREMOLO
+#include "md/tremolo/tremolo.hh"
+#endif
+
 #include "md/Exception.hh"
 #include "md/Writer.hh"
 
