@@ -26,7 +26,7 @@
 \hline
 \WMPI   & \EXTSOFTREQYES & Wrapped MPI & A tiny \PYTHON module providing a limited set of \MPI functionality on the scripting level. This module is part of the \MACI repository.\\
 \hline
-\SPBLAS & \EXTSOFTREQYES & Sparse BLAS & The current \MACI version depends on Sparse BLAS. Unfortunately, there are few (the authors are not aware of any) standard conforming high-performance implementations available. In future versions, a Sparse BLAS implementation will be optional and other packages, such as Intel's \MKL and Berkeley \OSKI will be usable.\\
+\SPBLAS & \EXTSOFTREQYES & Sparse BLAS & The current \MACI version depends on Sparse BLAS.\\
 \hline
 \TRILINOS & \EXTSOFTREQNO & Linear Algebra Package & Provides parallel solver routines for the computation of Lagrange multipliers.\\
 \hline
@@ -34,15 +34,15 @@
 \hline
 \UMFPACK & \EXTSOFTREQNO & Direct Solver & Provides solver routines for the computation of Lagrange multipliers. This solver can only be used if each connected component of the handshake region is fully contained in the domain of a single processor.\\
 \hline
-\UG & \EXTSOFTREQYES & FE code & Currently only the \UG (or \OBSLIB, resp.) code implements the interface to \MACI. In fact, the FE interface of \MACI is a copy of the \UG interface implemented in the \MSCOUPLING code.\\
+\UG & \EXTSOFTREQYES & FE code & Currently only the \UG code implements the interface to \MACI.\\
 \hline
 \LAMMPS & \EXTSOFTREQNO & MD code & Sandia's Open Source Molecular Dynamics Code. Very few changes to \LAMMPS are necessary to allow for linking it with the \MACI interface (see below).\\
 \hline
-\TREMOLO & \EXTSOFTREQNO & MD code & \TREMOLO is developed at the University of Bonn by the Group of Prof.~Griebel. It has been the only MD code usable with \MACI for a long time. The interface has been developed during an internship of the first author at the JSC J\"ulich and has lower code quality than the majority of the \MACI code. Many changes to the \TREMOLO code were necessary, rendering our \TREMOLO version incompatible with the official version. \LAMMPS is now the recommended MD code to use with \MACI but there are still features of the MD interface (such as stress calculations) which are only available with \TREMOLO. \\
+\TREMOLO & \EXTSOFTREQNO & MD code & \TREMOLO was developed at the University of Bonn by the Group of Prof.~Griebel. It has been the only MD code usable with \MACI for a long time. \LAMMPS is now the recommended MD code to use with \MACI but there are still features of the MD interface (such as stress calculations) which are only available with \TREMOLO. \\
 \end{supertabular}
 \end{center}
 
-Note that either \TRILINOS, \PETSC or \UMFPACK are required. It is possible to link against all of these libraries at the same time and chose the solver at runtime. Similarly, either \LAMMPS, \TREMOLO or \MDGPGPU are required for a successful build. However, \MACI only supports compilation with exactly one of these codes. The same limitation applies to the FE code(s).
+Note that either \TRILINOS, \PETSC or \UMFPACK are required. It is possible to link against all of these libraries at the same time and chose the solver at runtime. Similarly, either \LAMMPS or \TREMOLO are required for a successful build. However, \MACI only supports compilation with exactly one of these codes. The same limitation applies to the FE code(s).
 
 \subsection{Component Locations}
 
@@ -73,7 +73,7 @@ The different \MACI components and dependencies can be retrieved as follows:
 \hline
 \PETSC    & \href{http://www.mcs.anl.gov/petsc}{http://www.mcs.anl.gov/petsc} & \PETSC is installed on many clusters and supercomputers.\\
 \hline
-\UG and \MSCOUPLING & Upon request & The \MSCOUPLING package is a wrapper around the \UG datastructure which also implements linear elasticity and Cauchy-Born based elasticity. \MSCOUPLING is not compatible with the current trunk version of \UG.\\
+\UG      & Upon request & The \MSCOUPLING package is a wrapper around the \UG datastructure which also implements linear elasticity and Cauchy-Born based elasticity. \MSCOUPLING is not compatible with the current trunk version of \UG.\\
 \hline
 \LAMMPS   & \href{http://lammps.sandia.gov}{http://lammps.sandia.gov} & Small modifications are necessary to use \LAMMPS with \MACI (see below).\\
 \hline
@@ -89,14 +89,14 @@ As explained earlier, \MACI is driven by a collection of \PYTHON modules and \PY
 \begin{lstlisting}[style=SHELL]
 	-DBUILD_SHARED_LIBS:BOOL=ON
 \end{lstlisting}
-to the \CMAKE arguments. For other software (such as \LAMMPS) it should be ensured that \lstinline[style=CODE]|-fPIC| is part of the compilation and linking flags. This ensures that position-independent code is created.
+should be added to the \CMAKE arguments. For other software (such as \LAMMPS) it should be ensured that \lstinline[style=CODE]|-fPIC| is part of the compilation and linking flags. This ensures that position-independent code is created.
 
-It should be pointed out that there are a couple of problems associated with the extensive usage of DSOs in scientific applications like \MACI:
-\begin{itemize}
-\item There is limited or no support for DSOs on High-End Computing platforms (e.g., the Cray~XT architecture). The authors decision to use the \PYTHON language was majorly influenced by the support of this scripting language on the IBM BlueGene architecture. However, \MACI has not been tested on BlueGene.
-\item On heavily loaded systems, the execution time can grow substantially due to the need to load various DSOs.
-\item There is an increase in complexity associated with the management of many shared libraries.
-\end{itemize} 
+% It should be pointed out that there are a couple of problems associated with the extensive usage of DSOs in scientific applications like \MACI:
+% \begin{itemize}
+% \item There is limited or no support for DSOs on High-End Computing platforms (e.g., the Cray~XT architecture). The authors decision to use the \PYTHON language was majorly influenced by the support of this scripting language on the IBM BlueGene architecture. However, \MACI has not been tested on BlueGene.
+% \item On heavily loaded systems, the execution time can grow substantially due to the need to load various DSOs.
+% \item There is an increase in complexity associated with the management of many shared libraries.
+% \end{itemize} 
 
 \subsection{Building \LAMMPS}
 
@@ -105,7 +105,7 @@ Here, we describe how to set-up \LAMMPS such that it can be used with \MACI.
 \begin{enumerate}
 \item Download a fresh \LAMMPS version from the Sandia page.
 
-\item The next step is to adapt one of the \lstinline[style=SHELL]|MAKE/Makefile.XYZ| files. Here, we use \lstinline[style= SHELL]|Makefile.linux|. For this purpose we apply the following patch (shorted for editorial reasons):
+\item The next step is to adapt one of the \lstinline[style=SHELL]|MAKE/Makefile.XYZ| files. Here, we use \lstinline[style= SHELL]|Makefile.linux|. For this purpose we apply the following patch (shortened):
 
 \vspace{1pt}
 \begin{lstlisting}[style=SHELL_SMALL,frame=lines]
