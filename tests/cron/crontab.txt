@@ -1,0 +1,2 @@
+MAILTO=<USER>@<HOST>
+15 4 * * * <MACI TEST FOLDER>/cronjob.sh

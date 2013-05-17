@@ -1,0 +1,1 @@
+ ${BUILD}/lammps/ug/spblas/debug/maci/share/maci/overlap2 --na 200 130 --meshsize 7.5

@@ -1,0 +1,120 @@
+<!-- The simulation must know its dimension since this is 
+use to load the correct libraries. Also it makes sense not
+to allows the same input files for two and tree-dimensional
+simulations since they are so different -->
+<simulation dim = "2">
+
+	<!-- MD toolkit settings. Here, the input argument, potential
+	parameters etc. are defined -->
+	<mmsystem>
+		<!-- Settings for the LAMMPS MD toolkit. These values
+		are ignored when we run with Tremolo or any other MD toolkit -->
+		<lammps>
+			<!-- The input datafile. Depending on the toolkit the
+			format for this file will be completely different and different
+			informations are stored in this input file. We do not
+			try to hide this because these features might be very
+			helpfull -->
+			<datafile>
+				atoms2-lammps.data
+			</datafile>
+
+			<pair>
+				<!-- Pair potential type. Currently, "lj" and "ljw" are supported -->
+				<type> lj </type>
+				<!-- Parameters -->
+				<skin>  0.3 </skin>
+				<rcut>  2.5 </rcut>
+				<eps>   1.0 </eps>
+				<sigma> 1.0 </sigma>
+			</pair>
+		</lammps>
+
+		<!-- Settings for the Tremolo MD toolkit. These values
+		are ignored when we run with LAMMPS or any other MD toolkit -->
+		<tremolo>
+			<!-- The input datafile. Depending on the toolkit the
+			format for this file will be completely different and different
+			informations are stored in this input file. We do not
+			try to hide this because these features might be very
+			helpfull -->
+			<datafile>
+				atoms2-tremolo.data
+			</datafile>
+
+			#include "box2.xml"
+
+			<pair>
+				<!-- Pair potential type. Currently, "lj" and "ljw" are supported -->
+				<type> lj </type>
+				<!-- Parameters -->
+				<rcut>  2.5 </rcut>
+				<eps>   1.0 </eps>
+				<sigma> 1.0 </sigma>
+			</pair>
+
+			<!-- External forces can be added to the atoms based on
+			the assigned id in the data file. The <extforces> node must
+			be present even if we do not want to assing external
+			forces (for parsing reasons) -->
+			<extforces>
+			</extforces>
+		</tremolo>
+
+		<!-- Initial conditions for the displacement -->
+		<initcondsu>
+			RadialWave(x,y,z, A = 0.15, sigma = 15, b = 0.1)
+		</initcondsu>
+		<!-- Initial conditions for the velocity -->
+		<initcondsv>
+			[ 0.0, 0.0, 0.0 ]
+		</initcondsv>
+	</mmsystem>
+
+	<!-- Settings for the Verlet time integrator. Note that the presences
+	of this element in the XML file does not imply anything for the execution
+	since the tasks are defined on the Python level -->
+	<verlet>
+		<nsteps> 1000 </nsteps>
+		<tau> 0.005 </tau>
+		<!-- No damping -->
+		<damping>
+			<type> noop </type>
+		</damping>
+
+		<!-- Plugins: Plugins are C++ classes implemented in MACI
+		to do diagnostic, visualization or other analysis tasks which
+		are performed during time integration -->
+		<plugintable>
+			<!-- A plugin for measuring the energy. In the <plugin>
+			element, the constructor for the plugin should be specified.
+			The actual arguments depend on the plugin but the first
+			argument to the constructor is always "app" -->
+			<plugin pes = "md">
+				plugins.MeasureEnergy(app, mask = 10, outfile = "energy.dat")
+			</plugin>
+			<plugin pes = "md">
+				plugins.Visualize(app, mask = 100, prefix = "out")
+			</plugin>
+		</plugintable>
+	</verlet>
+
+	<!-- We need to define the mapping of processing elements to the 
+	FE or MD side if we do a coupled simulation. Here, we only have MD
+	processing elements so the decision is easy: We assign all pes to
+	the MD side -->
+	<procel>
+		<split>
+			<npes> T </npes>
+			<md> range(0,T) </md>
+			<fe> [] </fe>
+		</split>
+	</procel>
+
+	<!-- We do not couple, so our handshake region is empty -->
+	<handshake dim = "2">
+	</handshake>
+
+</simulation>
+
+

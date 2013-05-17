@@ -1,0 +1,75 @@
+
+# vi: tabstop=4
+
+{
+	"name"		: "CRACK_lammps_ug_l2_trilinos.2",
+	"descr"		: "Fracture propagation example, Cauchy-Born constitutive eq., RATTLE, L2 Projection, 2d",
+	"npes"		: [ 16 ],
+	"arguments"	: "--input_path \"%pwd:%pwd/L2:%pwd/TRILINOS\" in.py specs2.xml",
+	"output"	: [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"	: [ "lammps", "ug", "trilinos" ]
+}
+
+{
+	"name"		: "CRACK_lammps_ug_l2_petsc.2",
+	"descr"		: "Fracture propagation example, Cauchy-Born constitutive eq., RATTLE, L2 Projection, 2d",
+	"npes"		: [ 16 ],
+	"arguments"	: "--input_path \"%pwd:%pwd/L2:%pwd/PETSC\" in.py specs2.xml",
+	"output"	: [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"	: [ "lammps", "ug", "petsc" ]
+}
+
+{
+	"name"      : "CRACK_lammps_ug_ls_trilinos.2",
+	"descr"     : "Fracture propagation example, Cauchy-Born constitutive eq., RATTLE, LS Projection, 2d",
+	"npes"      : [ 16 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LS:%pwd/TRILINOS\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "lammps", "ug", "trilinos" ]
+}
+
+{
+	"name"      : "CRACK_lammps_ug_ls_petsc.2",
+	"descr"     : "Fracture propagation example, Cauchy-Born constitutive eq., RATTLE, LS Projection, 2d",
+	"npes"      : [ 16 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LS:%pwd/PETSC\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "lammps", "ug", "petsc" ]
+}
+
+{
+	"name"      : "CRACK_tremolo_ug_l2_trilinos.2",
+	"descr"     : "Fracture propagation example, Cauchy-Born constitutive eq., RATTLE, L2 Projection, 2d",
+	"npes"      : [ 16 ],
+	"arguments" : "--input_path \"%pwd:%pwd/L2:%pwd/TRILINOS\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "tremolo", "ug", "trilinos" ]
+}
+
+{
+	"name"      : "CRACK_tremolo_ug_l2_petsc.2",
+	"descr"     : "Fracture propagation example, Cauchy-Born constitutive eq., RATTLE, L2 Projection, 2d",
+	"npes"      : [ 16 ],
+	"arguments" : "--input_path \"%pwd:%pwd/L2:%pwd/PETSC\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "tremolo", "ug", "petsc" ]
+}
+
+{
+	"name"      : "CRACK_tremolo_ug_ls_trilinos.2",
+	"descr"     : "Fracture propagation example, Cauchy-Born constitutive eq., RATTLE, LS Projection, 2d",
+	"npes"      : [ 16 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LS:%pwd/TRILINOS\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "tremolo", "ug", "trilinos" ]
+}
+
+{
+	"name"      : "CRACK_tremolo_ug_ls_petsc.2",
+	"descr"     : "Fracture propagation example, Cauchy-Born constitutive eq., RATTLE, LS Projection, 2d",
+	"npes"      : [ 16 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LS:%pwd/PETSC\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "tremolo", "ug", "petsc" ]
+}
+

@@ -1,0 +1,9 @@
+<!-- Define the projection P used in evaluating constraints g = U - P*u = 0
+L2 and Least-Squares projection are implemented -->
+<projection>
+	<type> l2 </type>
+	<hdiam>
+		1.68369307246406 1.68369307246406 1.68369307246406
+	</hdiam>
+</projection>
+

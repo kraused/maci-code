@@ -1,0 +1,94 @@
+<simulation dim = "2">
+
+	<mmsystem>
+		<lammps>
+			<datafile>
+				atoms-lammps.data
+			</datafile>
+
+			<pair>
+				<type>  lj  </type>
+				<skin>  0.3 </skin>
+				<rcut>  1.5 </rcut>
+				<eps>   1.0 </eps>
+				<sigma> 1.0 </sigma>
+			</pair>
+		</lammps>
+
+		<tremolo>
+			<datafile>
+				atoms-tremolo.data
+			</datafile>
+
+			#include "box.xml"
+
+			<pair>
+				<type>  lj  </type>
+				<rcut>  1.5 </rcut>
+				<eps>   1.0 </eps>
+				<sigma> 1.0 </sigma>
+			</pair>
+
+			<extforces>
+			</extforces>
+		</tremolo>
+	</mmsystem>
+
+	<fesolver>
+		<ug>
+			#include "cb2.xml"
+
+			<rho>
+				0.916486424665735
+			</rho>
+
+			#include "meshfile.xml"
+
+			<loadbal>
+				<strategy> 0 </strategy>
+			</loadbal>
+
+			<vectors>
+				<vector>
+					<ncomps> 1 </ncomps>
+					<num> 7 </num>
+					<dof> node </dof>
+				</vector>
+				<vector>
+					<ncomps> 3 </ncomps>
+					<num> 7 </num>
+					<dof> node </dof>
+				</vector>
+				<vector>
+					<ncomps> 9 </ncomps>
+					<num> 1 </num>
+					<dof> element </dof>
+				</vector>
+			</vectors>
+		</ug>
+	</fesolver>
+
+	<!-- The file "handshake.xml" contains the definition of the
+	handshake geometry (as a collection of geometric primitives)
+	and the boundary values for the weighting function (which is
+	extended to the interior via interpolation -->
+	#include "handshake.xml"
+
+	<projection>
+		<type> ls </type>
+	</projection>
+
+	<filter>
+		<type> ls </type>
+	</filter>
+
+	<procel>
+		<split>
+			<npes> T </npes>
+			<md> range(0,T/2) </md>
+			<fe> range(T/2,T) </fe>
+		</split>
+	</procel>
+
+</simulation>
+

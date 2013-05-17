@@ -1,0 +1,46 @@
+
+{
+	"type"    	: "env",
+
+	# Name of the environment/what we are doing
+	"name"		: "MACI Testing on cub (Tremolo + UG + OSKI)",
+
+	# The host configuration containing details about the
+	# execution environment
+	"host" 	  	: "<HOST FILE>/cub.json",
+
+	# The mail address of the responsible for these tests.
+	# Test results will be mailed to this address.
+	"responsible" 	: "<EMAIL>",
+
+	# The input  test directory
+	"input"   	: "<TEST FOLDER>",
+	# The output test directory. This directory name
+	# depends on the time of execution.
+	"output"  	: "<HOME>/out.%a-%b-%y-%H-%M",
+
+	# The MACI executable
+	"exe"     	: "<BUILD ROOT>/tremolo/ug/oski/debug/maci/bin/maci",
+
+	# The configuration used for building the executable. The individual 
+	# items in the list can be used as "prereq" for tests so that tests
+	# which do not run with this configuration can be excluded.
+	"config"  	: [ "gnu", "open mpi", "tremolo", "ug", "trilinos", "petsc", "oski" ],
+	# The modules to load before the executable can run
+	"modules" 	: [ "goto2", "trilinos", "petsc", "fftw/2.1.5", "ga", "oski" ],
+
+	# The maximal time (in minutes) to wait for completion of the test jobs before
+	# cancelling
+	"max_walltime"  : 120,
+
+	# MPI infos. The MPI version should be in synch
+	# with the executable
+        "mpi"		:
+        {
+                "type"	: "open mpi",
+
+                # How to execute jobs
+                "cmd" 	: "mpiexec -np %npes -hostfile $PBS_NODEFILE -x OMP_NUM_THREADS=1 %exe %args"
+        }
+}
+

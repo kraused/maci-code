@@ -1,0 +1,6 @@
+<!-- Define the projection P used in evaluating constraints g = U - P*u = 0
+L2 and Least-Squares projection are implemented -->
+<projection>
+	<type> ls </type>
+</projection>
+

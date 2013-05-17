@@ -1,0 +1,1 @@
+ ${BUILD}/lammps/debug/maci/share/maci/crack2X --bdsize 30 --fesize 130 --na 100 200 --rho 100 50 5 --meshsize 3.75 --a 2.0 --b 83

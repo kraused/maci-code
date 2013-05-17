@@ -1,0 +1,83 @@
+
+# vi: tabstop=4
+
+{
+	"name"		: "SURROUND_lammps_ug_l2_trilinos.2",
+	"descr"		: "Wave propagation example, Cauchy-Born constitutive eq., RATTLE, L2 Projection, Trilinos solver, 2d",
+	"npes"		: [ 2, 8 ],
+	"arguments"	: "--input_path \"%pwd:%pwd/L2:%pwd/TRILINOS\" in.py specs2.xml",
+	"output"	: [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"	: [ "lammps", "ug", "trilinos" ],
+	"walltime"	: "00:30:00"
+}
+
+{
+	"name"      : "SURROUND_lammps_ug_l2_petsc.2",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., RATTLE, L2 Projection, PETSc solver, 2d",
+	"npes"      : [ 2, 8 ],
+	"arguments" : "--input_path \"%pwd:%pwd/L2:%pwd/PETSC\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "lammps", "ug", "petsc" ],
+	"walltime"  : "00:30:00"
+}
+
+{
+	"name"      : "SURROUND_lammps_ug_ls_trilinos.2",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., RATTLE, LS Projection, Trilinos solver, 2d",
+	"npes"      : [ 2, 8 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LS:%pwd/TRILINOS\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "lammps", "ug", "trilinos" ],
+	"walltime"  : "00:30:00"
+}
+
+{
+	"name"      : "SURROUND_lammps_ug_ls_petsc.2",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., RATTLE, LS Projection, PETSc solver, 2d",
+	"npes"      : [ 2, 8 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LS:%pwd/PETSC\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "lammps", "ug", "petsc" ],
+	"walltime"  : "00:30:00"
+}
+
+{
+	"name"      : "SURROUND_tremolo_ug_l2_trilinos.2",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., RATTLE, L2 Projection, Trilinos solver, 2d",
+	"npes"      : [ 2, 8 ],
+	"arguments" : "--input_path \"%pwd:%pwd/L2:%pwd/TRILINOS\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "tremolo", "ug", "trilinos" ],
+	"walltime"  : "00:30:00"
+}
+
+{
+	"name"      : "SURROUND_tremolo_ug_l2_petsc.2",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., RATTLE, L2 Projection, PETSc solver, 2d",
+	"npes"      : [ 2, 8 ],
+	"arguments" : "--input_path \"%pwd:%pwd/L2:%pwd/PETSC\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "tremolo", "ug", "petsc" ],
+	"walltime"  : "00:30:00"
+}
+
+{
+	"name"      : "SURROUND_tremolo_ug_ls_trilinos.2",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., RATTLE, LS Projection, Trilinos solver, 2d",
+	"npes"      : [ 2, 8 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LS:%pwd/TRILINOS\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "tremolo", "ug", "trilinos" ],
+	"walltime"  : "00:30:00"
+}
+
+{
+	"name"      : "SURROUND_tremolo_ug_ls_petsc.2",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., RATTLE, LS Projection, PETSc solver, 2d",
+	"npes"      : [ 2, 8 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LS:%pwd/PETSC\" in.py specs2.xml",
+	"output"    : [ "energy_md.dat", "energy_fe.dat" ],
+	"prereq"    : [ "tremolo", "ug", "petsc" ],
+	"walltime"  : "00:30:00"
+}
+

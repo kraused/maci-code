@@ -1,0 +1,21 @@
+
+{
+	"type"  : "host",
+	# The identifier for the host
+	"host"  : "<HOSTNAME>",
+
+	# The batch system on the host
+	"batch" :
+	{
+		"type" : "pbs",
+
+		# Define the executable interface
+		"sub"  : "qsub -lnodes=$(max(1,int(%npe/8))):ppn=$(min(%npe,8)),vmem=$(2*min(%npe,8))gb,walltime=%wtime -joe -N %name %script",
+		"del"  : "qdel  %jobid",
+		"stat" : "qstat %jobid"
+	},
+
+	# The command used to send mails
+	"sendmail" : "mail -s \"%subject\" %recipient < %file"
+}
+

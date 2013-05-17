@@ -1,0 +1,15 @@
+
+cron: "Template" for setting up nightly testing.
+
+The file crontab.txt shows the content of the crontab
+I used. The cronjob.sh script executes update_all.sh,
+build_all.sh and test_all.sh in this ordering. The
+folder structure should look as follows
+
+	cron +
+		 |
+		 + /config      -> Configuration files for the build
+		 + /envs        -> Environment files for the tests
+		 + /maci-code   -> Copy of the repository
+		 + [Optionally: /lammps-XYZ]
+

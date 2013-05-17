@@ -1,0 +1,121 @@
+<!-- The simulation must know its dimension since this is 
+use to load the correct libraries. Also it makes sense not
+to allows the same input files for two and tree-dimensional
+simulations since they are so different -->
+<simulation dim = "2">
+
+	<!-- FE toolkit settings. Here, the input argument, constitutive equation
+	parameters etc. are defined -->
+	<fesolver>
+		<!-- Settings for the UG FE toolkit. These values
+		are ignored when we run with another FE toolkit -->
+		<ug>
+			<!-- Include the file containing the parameters
+			for the constitutive equation -->
+			#include "le2.xml"
+
+			<!-- Density -->
+			<rho>
+				0.916486424665735
+			</rho>
+
+			<!-- Include the file containing the node positions
+			and element connectivity information -->
+			#include "mesh2.xml"
+
+			<!-- The load balalancing strategy. 0 means
+			that we use whatever strategy UG uses here -->
+			<loadbal>
+				<strategy> 0 </strategy>
+			</loadbal>
+
+			<!-- In UG we need to preallocate handles for
+			all vectors that we want to use. Note that this
+			does not mean they are actually allocated -->
+			<vectors>
+				<!-- Ask for seven vectors attached to the
+				nodes with one component (e.g., density or
+				temperature) -->
+				<vector>
+					<ncomps> 1 </ncomps>
+					<num> 7 </num>
+					<dof> node </dof>
+				</vector>
+				<!-- Ask for seven vectors attached to the
+				nodes with three components (e.g., velocity
+				or displacement). Note that we do not care
+				if the actual dimension of the simulation is
+				two- or three-dimensional. -->
+				<vector>
+					<ncomps> 3 </ncomps>
+					<num> 7 </num>
+					<dof> node </dof>
+				</vector>
+				<!-- Ask for 1 vector attached to the elements
+				with nine components (stress tensor) -->
+				<vector>
+					<ncomps> 9 </ncomps>
+					<num> 1 </num>
+					<dof> element </dof>
+				</vector>
+			</vectors>
+		</ug>
+
+		<!-- Initial conditions for the displacement -->
+		<initcondsu>
+			RadialWave(x,y,z, A = 0.15, sigma = 15, b = 0.1)
+		</initcondsu>
+		<!-- Initial conditions for the velocity -->
+		<initcondsv>
+			[ 0.0, 0.0, 0.0 ]
+		</initcondsv>
+	</fesolver>
+
+	<!-- Settings for the Verlet time integrator. Note that the presences
+	of this element in the XML file does not imply anything for the execution
+	since the tasks are defined on the Python level -->
+	<verlet>
+		<nsteps> 1000  </nsteps>
+		<tau>    0.005 </tau>
+		<!-- No damping -->
+		<damping>
+			<type> noop </type>
+		</damping>
+
+		<!-- Plugins: Plugins are C++ classes implemented in MACI
+		to do diagnostic, visualization or other analysis tasks which
+		are performed during time integration -->
+		<plugintable>
+			<!-- A plugin for measuring the energy. In the <plugin>
+			element, the constructor for the plugin should be specified.
+			The actual arguments depend on the plugin but the first
+			argument to the constructor is always "app" -->
+			<plugin pes = "fe">
+				plugins.MeasureEnergy(app, mask = 10, outfile = "energy.dat")
+			</plugin>
+			<plugin pes = "fe">
+				plugins.Visualize(app, mask = 100, prefix = "out")
+			</plugin>
+		</plugintable>
+	</verlet>
+
+	<!-- We need to define the mapping of processing elements to the 
+	FE or MD side if we do a coupled simulation. Here, we only have MD
+	processing elements so the decision is easy: We assign all pes to
+	the FE side -->
+	<procel>
+		<split>
+			<!-- Generic splitting with T processing elements -->
+			<npes> T </npes>
+			<md> [] </md>
+			<!-- Python expressions are evaluated at runtime -->
+			<fe> range(0,T) </fe>
+		</split>
+	</procel>
+
+        <!-- We do not couple, so our handshake region is empty -->
+	<handshake dim = "2">
+        </handshake>
+
+</simulation>
+

@@ -1,0 +1,1 @@
+ ${BUILD}/lammps/debug/maci/share/maci/surrounded2 --bdsize 30 --fesize 80 --na 150 78 --rho 20 20 5 --meshsize 3.75

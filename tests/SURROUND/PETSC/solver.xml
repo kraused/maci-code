@@ -1,0 +1,11 @@
+<!-- In this section we define solver for the linear system -->
+<solver>
+	<!-- currently trilinos, petsc and umfpack can be
+	supported depending on the configuration. Note that UMFPACK
+	assumes that each connected component of the handshake region
+	is located on a single processing element -->
+	<type> petsc </type>
+	<maxiter> 50 </maxiter>
+	<tol> 1e-9 </tol>
+</solver>
+

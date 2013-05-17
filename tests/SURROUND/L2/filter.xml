@@ -1,0 +1,15 @@
+<filter>
+	<!-- We support L2-based (l2) or Least-squares (ls) based filtering
+	(these are the projections implemented in MACI) -->
+	<type> l2 </type>
+	<!-- If the type is "l2" we need to specify the diameter of the
+	support for the Shepard generating functions.
+	There is a little problem here: For reasons of efficiency, the projection
+	operator is assembled only once and reused. Hence, if you also
+	use an L2 projection for the coupling and want to use a different
+	value for hdiam for these two projections, it will not work! -->
+	<hdiam>
+		1.68369307246406 1.68369307246406 1.68369307246406
+	</hdiam>
+</filter>
+

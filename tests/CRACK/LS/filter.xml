@@ -1,0 +1,6 @@
+<filter>
+	<!-- We support L2-based (l2) or Least-squares (ls) based filtering
+	(these are the projections implemented in MACI) -->
+	<type> ls </type>
+</filter>
+

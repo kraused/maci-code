@@ -1,0 +1,50 @@
+
+# vi: tabstop=4
+
+{
+	# A unique name for the test
+	"name"		: "MD_lammps.2",
+	# A human readable description of the test
+	"descr"		: "Wave propagation example, 2d",
+	# List of number of cores to use for testing
+	"npes"		: [ 1, 2, 4 ],
+	# Maximal walltime for each test (independent of the numb
+	# of processing elements). The default is 15min
+	"walltime"	: "00:15:00",
+	# The arguments to the executable
+	"arguments"	: "--input_path %pwd in.py specs2.xml",
+	# Output files produced by the test that can be
+	# used for checking correctness
+	"output"	: [ "energy.dat" ],
+	# A list of configuration prerequisits
+	"prereq"	: [ "lammps" ]
+}
+
+{
+	"name"		: "MD_lammps.3",
+	"descr"		: "Wave propagation example, 3d",
+	"npes"		: [ 1, 2, 4, 8 ],
+	"arguments"	: "--input_path %pwd in.py specs3.xml",
+	"output"	: [ "energy.dat" ],
+	"prereq"	: [ "lammps" ]
+}
+
+{
+	"name"		: "MD_tremolo.2",
+	"descr"		: "Wave propagation example, 2d",
+	"npes"		: [ 1, 2, 4 ],
+	"arguments"	: "--input_path %pwd in.py specs2.xml",
+	"output"	: [ "energy.dat" ],
+	"prereq"	: [ "tremolo" ]
+}
+
+{
+	"name"		: "MD_tremolo.3",
+	"descr"		: "Wave propagation example, 3d",
+	"npes"		: [ 1, 2, 4, 8, 16 ],
+	"arguments"	: "--input_path %pwd in.py specs3.xml",
+	"output"	: [ "energy.dat" ],
+	"prereq"	: [ "tremolo" ],
+	"walltime"  : "00:30:00"
+}
+

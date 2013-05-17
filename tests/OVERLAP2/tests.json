@@ -1,0 +1,43 @@
+
+# vi: tabstop=4
+
+#{
+#	"name"		: "OVERLAP2_lammps_ug_l2.2",
+#	"descr"		: "Overlap: Tests the Projection and Flucutation Filter, L2 Projection",
+#	"npes"		: [ 2, 8 ],
+#	"arguments"	: "--input_path \"%pwd\" in.py specs2.xml",
+#	"output"	: [ "energy_md.dat", "energy_fe.dat" ],
+#	"prereq"	: [ "lammps", "ug", "trilinos" ],
+#	"walltime"	: "00:30:00"
+#}
+
+{
+	"name"      : "OVERLAP2_lammps_ug_ls.2",
+	"descr"     : "Overlap: Tests the Projection and Fluctuation Filter, LS Projection",
+	"npes"      : [ 2, 8 ],
+	"arguments" : "--input_path \"%pwd\" in.py specs2.xml",
+#	"output"    : [ ],
+	"prereq"    : [ "lammps", "ug", "trilinos" ],
+	"walltime"  : "00:30:00"
+}
+
+#{
+#   "name"      : "OVERLAP2_tremolo_ug_l2.2",
+#   "descr"     : "Overlap: Tests the Projection and Flucutation Filter, L2 Projection",
+#   "npes"      : [ 2, 8 ],
+#   "arguments" : "--input_path \"%pwd\" in.py specs.xml",
+#   "output"    : [ "energy_md.dat", "energy_fe.dat" ],
+#   "prereq"    : [ "tremolo", "ug", "trilinos" ],
+#   "walltime"  : "00:30:00"
+#}
+
+{
+	"name"      : "OVERLAP2_tremolo_ug_ls.2",
+	"descr"     : "Overlap: Tests the Projection and Fluctuation Filter, LS Projection",
+	"npes"      : [ 2, 8 ],
+	"arguments" : "--input_path \"%pwd\" in.py specs2.xml",
+#	"output"    : [ ],
+	"prereq"    : [ "tremolo", "ug", "trilinos" ],
+	"walltime"  : "00:30:00"
+}
+

@@ -1,0 +1,39 @@
+
+# vi: tabstop=4
+
+{
+	"name"		: "FE_ug_cb.2",
+	"descr"		: "Wave propagation example, Cauchy-Born constitutive eq., 2d",
+	"npes"		: [ 1, 2, 4 ],
+	"arguments"	: "--input_path \"%pwd:%pwd/CB\" in.py specs2.xml",
+	"output"	: [ "energy.dat" ],
+	"prereq"	: [ "ug" ]
+}
+
+{
+	"name"      : "FE_ug_cb.3",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., 3d",
+	"npes"      : [ 1, 2, 4, 8 ],
+	"arguments" : "--input_path \"%pwd:%pwd/CB\" in.py specs3.xml",
+	"output"    : [ "energy.dat" ],
+	"prereq"    : [ "ug" ]
+}
+
+{
+	"name"      : "FE_ug_le.2",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., 2d",
+	"npes"      : [ 1, 2, 4 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LE\" in.py specs2.xml",
+	"output"    : [ "energy.dat" ],
+	"prereq"    : [ "ug" ]
+}
+
+{
+	"name"      : "FE_ug_le.3",
+	"descr"     : "Wave propagation example, Cauchy-Born constitutive eq., 3d",
+	"npes"      : [ 1, 2, 4, 8 ],
+	"arguments" : "--input_path \"%pwd:%pwd/LE\" in.py specs3.xml",
+	"output"    : [ "energy.dat" ],
+	"prereq"    : [ "ug" ]
+}
+
