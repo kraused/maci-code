@@ -1,0 +1,42 @@
+#
+# Maci_TPL_OSKI.cmake: OSKI Third-Party Package
+#
+
+INCLUDE(MACI_TPL_CHECK_INPUT)
+INCLUDE(MACI_TPL_REPORT)
+
+OPTION(TPL_ENABLE_OSKI "Enable OSKI" OFF)
+
+MACI_TPL_REPORT(OSKI)
+IF(NOT TPL_ENABLE_OSKI)
+	RETURN()
+ENDIF()
+
+# The following variables must be set on the command
+# line:
+#
+# - OSKI_INCLUDE_DIRS:PATH
+# - OSKI_LIBRARY_DIRS:PATH
+#
+MACI_TPL_CHECK_INPUT(OSKI)
+
+INCLUDE_DIRECTORIES(${OSKI_INCLUDE_DIRS})
+LINK_DIRECTORIES   (${OSKI_LIBRARY_DIRS})
+
+# We don't use OSKI_LIBRARY_NAMES but rather try
+# to read the libraryes from the site/modules-shared.txt
+# file
+FILE  (READ "${OSKI_LIBRARY_DIRS}/site-modules-shared.txt" T1)
+STRING(REGEX REPLACE "\n" ";" T2 "${T1}")
+STRING(REGEX REPLACE "-l" ""  T3 "${T2}")
+
+SET(OSKI_LIBRARY_NAMES "${T3}")
+
+LIST(APPEND LIBS2 "${OSKI_LIBRARY_NAMES}")
+LIST(APPEND LIBS3 "${OSKI_LIBRARY_NAMES}")
+
+LIST(APPEND SRC2 "linalg/SparseOSKIMatrix.cc")
+LIST(APPEND SRC3 "linalg/SparseOSKIMatrix.cc")
+
+SET(HAVE_OSKI 1)
+

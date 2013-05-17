@@ -1,0 +1,33 @@
+#
+# Maci_TPL_PVO.cmake: PVO Third-Party Package
+#
+
+INCLUDE(MACI_TPL_CHECK_INPUT)
+INCLUDE(MACI_TPL_REPORT)
+
+OPTION(TPL_ENABLE_PVO "Enable PVO" OFF)
+
+MACI_TPL_REPORT(PVO)
+IF(NOT TPL_ENABLE_PVO)
+	RETURN()
+ENDIF()
+
+# The following variables must be set on the command
+# line:
+#
+# - PVO_INCLUDE_DIRS:PATH
+# - PVO_LIBRARY_DIRS:PATH
+#
+MACI_TPL_CHECK_INPUT(PVO)
+
+INCLUDE_DIRECTORIES(${PVO_INCLUDE_DIRS})
+LINK_DIRECTORIES   (${PVO_LIBRARY_DIRS})
+
+LIST(APPEND LIBS2 pvo)
+LIST(APPEND LIBS3 pvo)
+
+LIST(APPEND SRC2 md/PvoWriter.cc fe/PvoWriter.cc)
+LIST(APPEND SRC3 md/PvoWriter.cc fe/PvoWriter.cc)
+
+SET(HAVE_PVO 1)
+
