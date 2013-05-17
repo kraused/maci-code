@@ -1,0 +1,115 @@
+diff -rupN src/atom.cpp /home/kraused/lammps-21Jul10/src/atom.cpp
+--- src/atom.cpp	2010-06-18 21:49:12.000000000 +0200
++++ /home/kraused/lammps-21Jul10/src/atom.cpp	2010-07-29 23:00:33.000000000 +0200
+@@ -260,6 +260,11 @@ void Atom::create_avec(const char *style
+    generate an AtomVec class
+ ------------------------------------------------------------------------- */
+ 
++/* ---------- MACI ---------- */
++AtomVec *(*NewAtomVecMultiscaleAtomicCB)(LAMMPS *, int, char **) = 0;
++AtomVec *(*NewAtomVecMultiscaleFullCB)(LAMMPS *, int, char **) = 0;
++/* ---------- MACI ---------- */
++
+ AtomVec *Atom::new_avec(const char *style, int narg, char **arg)
+ {
+   if (0) return NULL;
+@@ -270,6 +275,13 @@ AtomVec *Atom::new_avec(const char *styl
+ #include "style_atom.h"
+ #undef ATOM_CLASS
+ 
++  /* ---------- MACI ---------- */
++  else if (0 == strcmp(style,"multiscale_atomic")) 
++        return NewAtomVecMultiscaleAtomicCB(lmp, narg, arg);
++  else if (0 == strcmp(style,"multiscale_full")) 
++        return NewAtomVecMultiscaleFullCB(lmp, narg, arg);
++  /* ---------- MACI ---------- */
++
+   else error->all("Invalid atom style");
+   return NULL;
+ }
+diff -rupN src/atom.h /home/kraused/lammps-21Jul10/src/atom.h
+--- src/atom.h	2010-01-14 20:44:09.000000000 +0100
++++ /home/kraused/lammps-21Jul10/src/atom.h	2010-07-29 22:37:11.000000000 +0200
+@@ -105,6 +105,10 @@ class Atom : protected Pointers {
+   int sortfreq;             // sort atoms every this many steps, 0 = off
+   int nextsort;             // next timestep to sort on
+ 
++  /* ---------- MACI ---------- */
++  void* pb;
++  /* ---------- MACI ---------- */
++
+   // functions
+ 
+   Atom(class LAMMPS *);
+diff -rupN src/MAKE/Makefile.linux /home/kraused/lammps-21Jul10/src/MAKE/Makefile.linux
+--- src/MAKE/Makefile.linux	2010-07-13 16:00:15.000000000 +0200
++++ /home/kraused/lammps-21Jul10/src/MAKE/Makefile.linux	2010-07-29 22:41:00.000000000 +0200
+@@ -6,11 +6,11 @@ SHELL = /bin/sh
+ # compiler/linker settings
+ # specify flags and libraries needed for your compiler
+ 
+-CC =		icc
+-CCFLAGS =	-O
++CC =		mpicxx
++CCFLAGS =	-O -fPIC
+ DEPFLAGS =	-M
+-LINK =		icc
+-LINKFLAGS =	-O
++LINK =		mpicxx
++LINKFLAGS =	-O -fPIC
+ LIB =           -lstdc++
+ ARCHIVE =	ar
+ ARFLAGS =	-rc
+@@ -29,18 +29,18 @@ LMP_INC =	-DLAMMPS_GZIP
+ # PATH = path for MPI library
+ # LIB = name of MPI library
+ 
+-MPI_INC =       -DMPICH_SKIP_MPICXX 
++MPI_INC = 
+ MPI_PATH = 
+-MPI_LIB =	-lmpich -lpthread
++MPI_LIB =
+ 
+ # FFT library, can be -DFFT_NONE if not using PPPM from KSPACE package
+ # INC = -DFFT_FFTW, -DFFT_INTEL, -DFFT_NONE, etc, FFT compiler settings
+ # PATH = path for FFT library
+ # LIB = name of FFT library
+ 
+-FFT_INC =       -DFFT_FFTW
+-FFT_PATH = 
+-FFT_LIB =	-lfftw
++FFT_INC = $(FFTW_POST_COMPILE_OPTS) -DFFT_FFTW
++FFT_PATH =
++FFT_LIB = $(FFTW_POST_LINK_OPTS)
+ 
+ # additional system libraries needed by LAMMPS package libraries
+ # these settings are IGNORED if the corresponding LAMMPS package
+diff -rupN src/modify.cpp /home/kraused/lammps-21Jul10/src/modify.cpp
+--- src/modify.cpp	2010-07-16 01:23:37.000000000 +0200
++++ /home/kraused/lammps-21Jul10/src/modify.cpp	2010-07-29 23:02:47.000000000 +0200
+@@ -542,6 +542,11 @@ int Modify::min_reset_ref()
+    add a new fix or replace one with same ID
+ ------------------------------------------------------------------------- */
+ 
++/* ---------- MACI ---------- */
++Fix *(*NewRattleIntegratorCB)(LAMMPS *, int, char **) = 0;
++Fix *(*NewVerletIntegratorCB)(LAMMPS *, int, char **) = 0;
++/* ---------- MACI ---------- */
++
+ void Modify::add_fix(int narg, char **arg)
+ {
+   if (domain->box_exist == 0) 
+@@ -598,6 +603,13 @@ void Modify::add_fix(int narg, char **ar
+ #include "style_fix.h"
+ #undef FIX_CLASS
+ 
++/* ---------- MACI ---------- */
++  else if (0 == strcmp(arg[2],"multiscale_RattleIntegrator")) 
++        fix[ifix] = NewRattleIntegratorCB(lmp, narg, arg);
++  else if (0 == strcmp(arg[2],"multiscale_VerletIntegrator")) 
++        fix[ifix] = NewVerletIntegratorCB(lmp, narg, arg);
++/* ---------- MACI ---------- */
++
+   else error->all("Invalid fix style");
+ 
+   // if fix is new, set it's mask values and increment nfix

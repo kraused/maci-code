@@ -1,0 +1,147 @@
+diff -ur /Users/kraused/Downloads/lammps-7Dec10/src/MAKE/Makefile.linux src/MAKE/Makefile.linux
+--- /Users/kraused/Downloads/lammps-7Dec10/src/MAKE/Makefile.linux	2010-07-13 16:00:15.000000000 +0200
++++ src/MAKE/Makefile.linux	2010-12-09 22:22:29.000000000 +0100
+@@ -6,11 +6,11 @@
+ # compiler/linker settings
+ # specify flags and libraries needed for your compiler
+ 
+-CC =		icc
+-CCFLAGS =	-O
++CC =		c++
++CCFLAGS =	-O -fPIC
+ DEPFLAGS =	-M
+-LINK =		icc
+-LINKFLAGS =	-O
++LINK =		c++
++LINKFLAGS =	-O -fPIC
+ LIB =           -lstdc++
+ ARCHIVE =	ar
+ ARFLAGS =	-rc
+@@ -29,18 +29,18 @@
+ # PATH = path for MPI library
+ # LIB = name of MPI library
+ 
+-MPI_INC =       -DMPICH_SKIP_MPICXX 
++MPI_INC = 
+ MPI_PATH = 
+-MPI_LIB =	-lmpich -lpthread
++MPI_LIB =
+ 
+ # FFT library, can be -DFFT_NONE if not using PPPM from KSPACE package
+ # INC = -DFFT_FFTW, -DFFT_INTEL, -DFFT_NONE, etc, FFT compiler settings
+ # PATH = path for FFT library
+ # LIB = name of FFT library
+ 
+-FFT_INC =       -DFFT_FFTW
+-FFT_PATH = 
+-FFT_LIB =	-lfftw
++FFT_INC = $(FFTW_POST_COMPILE_OPTS) -DFFT_FFTW
++FFT_PATH =
++FFT_LIB = $(FFTW_POST_LINK_OPTS)
+ 
+ # additional system libraries needed by LAMMPS package libraries
+ # these settings are IGNORED if the corresponding LAMMPS package
+diff -ur /Users/kraused/Downloads/lammps-7Dec10/src/atom.cpp src/atom.cpp
+--- /Users/kraused/Downloads/lammps-7Dec10/src/atom.cpp	2010-12-01 01:03:15.000000000 +0100
++++ src/atom.cpp	2010-12-09 22:21:00.000000000 +0100
+@@ -278,6 +278,11 @@
+    generate an AtomVec class
+ ------------------------------------------------------------------------- */
+ 
++/* ---------- MACI ---------- */
++AtomVec *(*NewAtomVecMultiscaleAtomicCB)(LAMMPS *, int, char **) = 0;
++AtomVec *(*NewAtomVecMultiscaleFullCB)(LAMMPS *, int, char **) = 0;
++/* ---------- MACI ---------- */
++
+ AtomVec *Atom::new_avec(const char *style, int narg, char **arg)
+ {
+   if (0) return NULL;
+@@ -288,6 +293,13 @@
+ #include "style_atom.h"
+ #undef ATOM_CLASS
+ 
++  /* ---------- MACI ---------- */
++  else if (0 == strcmp(style,"multiscale_atomic")) 
++        return NewAtomVecMultiscaleAtomicCB(lmp, narg, arg);
++  else if (0 == strcmp(style,"multiscale_full")) 
++        return NewAtomVecMultiscaleFullCB(lmp, narg, arg);
++  /* ---------- MACI ---------- */
++
+   else error->all("Invalid atom style");
+   return NULL;
+ }
+diff -ur /Users/kraused/Downloads/lammps-7Dec10/src/atom.h src/atom.h
+--- /Users/kraused/Downloads/lammps-7Dec10/src/atom.h	2010-12-01 01:03:15.000000000 +0100
++++ src/atom.h	2010-12-09 22:21:00.000000000 +0100
+@@ -109,6 +109,10 @@
+   int sortfreq;             // sort atoms every this many steps, 0 = off
+   int nextsort;             // next timestep to sort on
+ 
++  /* ---------- MACI ---------- */
++  void* pb;
++  /* ---------- MACI ---------- */
++
+   // functions
+ 
+   Atom(class LAMMPS *);
+diff -ur /Users/kraused/Downloads/lammps-7Dec10/src/force.cpp src/force.cpp
+--- /Users/kraused/Downloads/lammps-7Dec10/src/force.cpp	2010-10-25 22:26:14.000000000 +0200
++++ src/force.cpp	2010-12-10 10:40:01.000000000 +0100
+@@ -130,6 +130,10 @@
+    generate a pair class
+ ------------------------------------------------------------------------- */
+ 
++/* ---------- MACI ---------- */
++Pair* (*NewPairLJCutWeightedCB)(LAMMPS *) = 0;
++/* ---------- MACI ---------- */
++
+ Pair *Force::new_pair(const char *style)
+ {
+   if (strcmp(style,"none") == 0) return NULL;
+@@ -140,6 +144,11 @@
+ #include "style_pair.h"
+ #undef PAIR_CLASS
+ 
++/* ---------- MACI ---------- */
++  else if(0 == strcmp(style, "multiscale_ljw/cut"))
++    return NewPairLJCutWeightedCB(lmp);
++/* ---------- MACI ---------- */
++
+   else error->all("Invalid pair style");
+   return NULL;
+ }
+Only in src: gcc_421
+Only in src: intel_111
+Only in src: lmp_linux
+diff -ur /Users/kraused/Downloads/lammps-7Dec10/src/modify.cpp src/modify.cpp
+--- /Users/kraused/Downloads/lammps-7Dec10/src/modify.cpp	2010-10-22 23:27:35.000000000 +0200
++++ src/modify.cpp	2010-12-09 22:21:00.000000000 +0100
+@@ -580,6 +580,12 @@
+    add a new fix or replace one with same ID
+ ------------------------------------------------------------------------- */
+ 
++/* ---------- MACI ---------- */
++Fix *(*NewRattleIntegratorCB)(LAMMPS *, int, char **) = 0;
++Fix *(*NewVerletIntegratorCB)(LAMMPS *, int, char **) = 0;
++Fix *(*NewNoOpIntegratorCB  )(LAMMPS *, int, char **) = 0;
++/* ---------- MACI ---------- */
++
+ void Modify::add_fix(int narg, char **arg)
+ {
+   if (domain->box_exist == 0) 
+@@ -636,6 +642,15 @@
+ #include "style_fix.h"
+ #undef FIX_CLASS
+ 
++/* ---------- MACI ---------- */
++  else if (0 == strcmp(arg[2],"multiscale_RattleIntegrator")) 
++        fix[ifix] = NewRattleIntegratorCB(lmp, narg, arg);
++  else if (0 == strcmp(arg[2],"multiscale_VerletIntegrator")) 
++        fix[ifix] = NewVerletIntegratorCB(lmp, narg, arg);
++  else if (0 == strcmp(arg[2],"multiscale_NoOpIntegrator"))
++        fix[ifix]  = NewNoOpIntegratorCB(lmp, narg, arg);
++/* ---------- MACI ---------- */
++
+   else error->all("Invalid fix style");
+ 
+   // if fix is new, set it's mask values and increment nfix
