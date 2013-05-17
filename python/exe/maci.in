@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# vi: tabstop=4:expandtab
+
+append()
+{
+    if [[ "" == "$${PLATFORM_LIBRARY_PATH}" ]]; then
+        ${PLATFORM_LIBRARY_PATH}=$1
+    else
+        ${PLATFORM_LIBRARY_PATH}=$${PLATFORM_LIBRARY_PATH}:$1
+    fi
+
+    export ${PLATFORM_LIBRARY_PATH}
+}
+
+for p in ${CMAKE_INSTALL_PREFIX}/lib/maci ${wmpi_LIBRARY_DIRS} ${PVO_LIBRARY_DIRS} ${MD_LIBRARY_DIRS} ${FE_LIBRARY_DIRS} ${mexico_LIBRARY_DIRS}; do
+    append $p
+done
+
+# VG="valgrind --error-limit=no"
+VG=""
+
+$VG ${MACI_EXE} $*
+

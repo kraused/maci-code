@@ -1,0 +1,11 @@
+
+import sys
+
+
+# Common base class for all MMSystem implementations
+class MMSystemBase:
+	
+	# Create a new instance
+	def __init__(self):
+		pass
+

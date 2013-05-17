@@ -1,0 +1,29 @@
+
+import sys
+import math
+
+import mpi
+import maciS${DIM} as maciS
+
+ParticleListSelectAll   = 0
+ParticleListSelectHs    = 1
+ParticleListSelectNonHs = 2
+ParticleListSelectInBox = 3
+
+# Wrapper around the particle list class
+class ParticleList(maciS.ParticleList):
+
+	# Create a new instance
+	# @param select
+	def __init__(self, select, *vargs):
+		maciS.ParticleList.__init__(self)
+
+		if ParticleListSelectAll   == select:
+			maciS.ParticleList.AddSelectionAll(self,maciS.SelectAllParticles())
+		if ParticleListSelectHs    == select:
+			maciS.ParticleList.AddSelectionHandshake(self,maciS.SelectHandshakeParticles())
+		if ParticleListSelectNonHs == select:
+			maciS.ParticleList.AddSelectionNonHandshake(self,maciS.SelectNonHandshakeParticles())
+		if ParticleListSelectInBox == select:
+			maciS.ParticleList.AddSelectionInBox(self,maciS.SelectParticlesInBox(vargs[0]))
+

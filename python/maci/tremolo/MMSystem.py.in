@@ -1,0 +1,145 @@
+
+import math
+import sys
+
+import maciS${DIM} as maciS
+import InputPath
+
+from   MMSystemBase import MMSystemBase as Base
+
+# Wrapper around a tremolo instance
+class MMSystem(maciS.TremoloInstance, Base):
+
+	# Create a new instance
+	# @param comm		the communicator
+	# @param filename	filename to read input data from
+	def __init__(self, comm, filename):
+		maciS.TremoloInstance.__init__(self, comm.handle())
+
+		Base.__init__(self)
+		self.readXML(filename)
+
+		if(None != self.__pes):
+			self.SetProcessors(self.__pes)
+		
+		self.SetSimulationBox(self.__box)
+
+		if "lj"  == self.__pair_type:
+			self.Set_Pair_Potential_LJ(self.__rcut, self.__eps, self.__sigma)
+		if "ljw" == self.__pair_type:
+			self.Set_Pair_Potential_LJ_Weighted(self.__rcut, self.__eps, self.__sigma)
+
+		# External forces
+		fx = []
+		for k,v in self.__extforces.iteritems():
+			if k == v[0]:
+				fx = [ fx, v[1:4] ]
+			else:
+				fx = [ fx, None ]
+		
+		if self.__nexttypes > 0:
+			self.SetExtforces(fx)
+
+		self.Init(self.__file)
+
+	# Initialize the module.
+	def init(self, apps):
+		pass
+
+	# Read mesh data from an XML file
+	# @param filename	input file name
+	def readXML(self, filename):
+		# List of external forces
+		self.__extforces = {}
+		self.__nexttypes = 0
+
+		def InsertExtForce(arg):
+			%parse (STRING arg)
+				%block (extforce)
+					(mandatory int      id  -> id)
+					(mandatory float[3] val -> val)
+				%kcolb
+			%esrap
+
+			self.__extforces.append([ id ] + val)
+			self.__nexttypes = self.__nexttypes + 1
+
+		# Setting __pes to None allows us to check if it has been
+		# set
+		self.__pes = None
+
+		# Parse the XML File
+		%parse (FILE filename)
+			%block (simulation)
+				%block (mmsystem)
+
+					%block (tremolo)
+			(mandatory string datafile   -> self.__file)
+						(optional  int[3] processors -> self.__pes)
+
+						(mandatory float[6] box -> self.__box)
+
+						%block (pair)
+						(mandatory string type  -> self.__pair_type) 
+						(mandatory float  rcut  -> self.__rcut)
+						(mandatory float  eps   -> self.__eps)
+						(mandatory float  sigma -> self.__sigma)
+						%kcolb
+
+						%block (extforces)
+							*(something extforce => InsertExtForce)
+						%kcolb
+					%kcolb
+				%kcolb
+			%kcolb
+		%esrap
+
+		if not self.__pair_type in [ "lj", "ljw" ]:
+			sys.exit(" ERROR: Invalid pair potential type.")
+
+		# Find the file in the input path and replace self.__file by the
+		# absolute path
+		self.__file = InputPath.FindInPath(self.__file)
+
+	# Verlet integration
+	# @param[in]	nsteps	number of steps
+	# @param[in]	integrator	integrator
+	def runVerlet(self, nsteps, integrator):
+		maciS.TremoloVerletIntegrator(self, integrator.tau, integrator).Run(nsteps)
+
+	# Rattle integration
+	# @param[in]	nsteps		number of steps
+	# @param[in]	integrator		integrator
+	def runRattle(self, nsteps, integrator):
+		maciS.TremoloRattleIntegrator(self, integrator.tau, integrator).Run(nsteps)
+
+
+	# Initialize the particle displacements with the values of the function
+	# func (which should return a list of length three) at the particle
+	# positions
+	def ApplyFunctionDispl(self, func):
+		self.AccessBegin(self.RD_POS | self.WR_POS)
+
+		for i in range(0, self.GetMaxId()+1):
+			p = self.GetParticleById(i)
+			if None != p:
+				t = func(p[0], p[1], p[2])
+				for d in (0,1,2):
+					p[d] = p[d] + t[d]
+
+		self.AccessEnd()
+
+	# Initalize the velocities with the values of the function func
+	# at the particle positions
+	def ApplyFunctionVel  (self, func):
+		self.AccessBegin(self.RD_POS | self.WR_VEL)
+
+		for i in range(0, self.GetMaxId()+1):
+			p = self.GetParticleById(i)
+			if None != p:
+				t = func(p[0], p[1], p[2])
+				for d in (0,1,2):
+					p[6+d] = t[d]
+
+		self.AccessEnd()
+

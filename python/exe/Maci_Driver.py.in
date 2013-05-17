@@ -1,0 +1,146 @@
+
+import sys
+import os
+import datetime
+
+# ----------------------------------------
+# Update the sys.path variable (module search
+# path)
+# ----------------------------------------
+for p in [ '${CMAKE_INSTALL_PREFIX}/lib/maci', '${wmpi_LIBRARY_DIRS}', '${MD_LIBRARY_DIRS}', '${FE_LIBRARY_DIRS}' ]:
+	sys.path.append(p)
+
+# ----------------------------------------
+# The function FindInPath() finds a
+# file in in the directories in the input
+# path and returns the absolute path to the
+# file.
+# 
+# The same functionality is also provided in
+# the MACI core library but unfortunately we
+# cannot use it here and need to provide our
+# own implementation.
+# ----------------------------------------
+def FindInPath(file):
+	for v in INPUT_PATH:
+		if os.path.exists(v + "/" + file):
+			return v + "/" + file
+
+	sys.exit(" ERROR: File %s not found in input path %s." % (file, INPUT_PATH))
+
+# ----------------------------------------
+# Parse input options
+#
+# WARN  We assume that the MPI implementation
+#       passes the input arguments to all
+#       ranks which is not guaranteed by the
+#       standard.
+#
+# In Python 2.7 the optparse module is
+# deprecated and is replaced by argparse!
+# ----------------------------------------
+import optparse
+parser = optparse.OptionParser()
+
+parser.add_option("--input_path", 
+		dest    = "input_path",
+		action  = "store",
+		type    = "string",
+		default = "",
+		help    = "The list of search directories for input (seperated by ':'). The process working directory is always part of the search path.")
+
+(opts, args) = parser.parse_args()
+
+if 2 != len(args):
+	sys.exit(" ERROR: Need exactly two arguments (script and spec file) but got args = %s." % args)
+
+# We always add the current working directory to the
+# input path
+INPUT_PATH = [ os.getcwd() ]
+for v in opts.input_path.split(":"):
+	# Make sure we do not add the current directory more than once
+	if len(v) > 0 and not os.path.samefile(v, INPUT_PATH[0]):
+		INPUT_PATH.append(v)
+
+# Map relative to absolute paths
+for i,v in enumerate(INPUT_PATH):
+	INPUT_PATH[i] = os.path.abspath(v)
+
+SPECFILE = FindInPath(args[1])
+SCRIPT   = FindInPath(args[0])
+
+# ----------------------------------------
+# Initialize MPI
+#
+# This must be done before the maci
+# library is called
+# ----------------------------------------
+mpi     = __import__("mpi")
+mpi.init()
+
+# ----------------------------------------
+# Load the correct maci library for the
+# dimension specified in the spec file
+#
+# The library is exported as "maci" to the
+# outside world.
+# ----------------------------------------
+import xml.dom.minidom
+
+nd  = xml.dom.minidom.parse(SPECFILE).getElementsByTagName("simulation")
+if len(nd) < 1:
+	sys.exit(" ERROR: No element with tag name '%s' found!" % node)
+
+maci = __import__("maci%s" % nd[0].getAttribute("dim"))
+
+# Pass the INPUT_PATH to the MACI core library
+# so that their FindInPath() function works
+maci._InputPath.SetInputPath(INPUT_PATH)
+del INPUT_PATH
+
+maci.SPECFILE = SPECFILE
+del SPECFILE
+
+# ----------------------------------------
+# Write the banner
+# ----------------------------------------
+F = open("${CMAKE_INSTALL_PREFIX}/lib/maci/maci-banner.txt", "r")
+for line in F.readlines():
+	sys.stdout.write(line)
+F.close()
+print ""
+print " CURRENT TIME: %s" % datetime.datetime.now().strftime("%a %b %y %H %M %S")
+print ""
+print " STARTING EXECUTION."
+print ""
+
+# ----------------------------------------
+# Run the user script
+# ----------------------------------------
+execfile(SCRIPT)
+
+# ----------------------------------------
+# Write the prolog
+# ----------------------------------------
+print ""
+print " EXECUTION FINISHED."
+print ""
+print " CURRENT TIME: %s" % datetime.datetime.now().strftime("%a %b %y %H %M %S")
+print ""
+
+# ----------------------------------------
+# Finalize MPI
+# ----------------------------------------
+
+# Because many classes on the C/C++ level assume that they are
+# destroyed before MPI is finalized (which is usual if a "normal"
+# main routine is used) we need to clear the workspace before
+# finalizing MPI to make sure that the destructor of these 
+# instances is called
+for var in dir():
+	# Skip python stuff and of course the mpi module itself
+	if "__" != var[0:2] and "mpi" != var:
+		exec("del %s" % var)
+
+mpi.finalize()
+

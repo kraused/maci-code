@@ -1,0 +1,62 @@
+
+import sys
+import maciS${DIM} as maciS
+import ProcElement
+
+
+# Wrapper around InterpolationWeights
+class InterpolationWeights(maciS.InterpolationWeights):
+
+	# Create a new instance
+	# @param[in] app	the Maci instance 
+	# @param[in] xmlfile	The input xml file
+	def __init__(self, app, xmlfile):
+		# The weight function is 1.0 at all values not
+		# inside one of the primitives added below
+		maciS.InterpolationWeights.__init__(self, 1.0)
+
+		# Add a new primitive. On each primitive
+		# the function is defined as the interpolation
+		# of (boundary) values in the interior.
+		def AddPrimitive(arg):
+			%parse (STRING arg)
+				%block (primitive)
+					(mandatory string type -> type)
+				%kcolb
+			%esrap
+
+			if "cuboid" == type:
+				%parse (STRING arg)
+					%block (primitive)
+						(mandatory float[*] patch -> c)
+						(mandatory float[*] vals  -> v)
+					%kcolb
+				%esrap
+
+				# The values in the input file are the values of the
+				# MD weight function at the corners. On FE processing
+				# elements we therefore need to compute the "complement"
+				# values
+				if ProcElement.ProcMD == app.procel.mytype:
+					self.AddNewPrimitive(maciS.Cuboid(c), v)
+				if ProcElement.ProcFE == app.procel.mytype:
+					self.AddNewPrimitive(maciS.Cuboid(c), map(lambda x: 1.0-x, v))
+			else:
+				sys.exit(" ERROR: Unsupported type '%s'!" % type)
+
+		%parse (FILE xmlfile)
+			%block (simulation)
+				%block (handshake, mandatory int dim -> dim)
+					*(something primitive => AddPrimitive)
+				%kcolb
+			%kcolb
+		%esrap
+
+		if ${DIM} != dim:
+			sys.exit(" ERROR: Handshake geometry has wrong dimension!")
+
+		# On the MD side we cache the values in the piggyback structure
+		# and hence we need to update these values
+		# On FE computing elements this is a no-op.
+		self.Update(app.procel)
+

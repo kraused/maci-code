@@ -1,0 +1,255 @@
+
+import sys
+import math
+
+from ug${DIM} import MeshD
+from ug${DIM} import IdBasedLoadbalManagerPyObj${DIM} as IdBasedLoadbalManagerPyObj
+
+# Wrapper around the UG mesh class
+class Mesh(MeshD):
+	
+	# Create a new instance
+	# @param comm		the communicator for the UG module
+	# @param filename	name of the input xml file
+	def __init__(self, comm, filename):
+		self.readXML(filename)
+
+		MeshD.__init__(self, comm)
+		self.ConfigureBVP(self.getProblem${DIM}(), self.getDomain${DIM}())
+		self.Newformat(self.__vec)
+		self.NewMultigrid()
+
+		self.InsertEverything()
+
+		self.Fixcoarsegrid()
+
+		if   0 == self.__lbs:
+			self.Loadbal0()
+		elif 9 == self.__lbs:
+			if len(self.__els) != len(self.__lbmap):
+				sys.exit(" ERROR: Loadbalancing mapping is invalid!")
+
+			self.Loadbal9(IdBasedLoadbalManagerPyObj(lambda i: self.__lbmap[i]))
+
+	#	self.Refine       (self.__level)
+	#	self.Collapse     ()
+		self.Createvectors()
+
+	# Get the problem name (2 dim)
+	def getProblem2(self):
+		return "Quad"
+	
+	# Get the problem name (3 dim)
+	def getProblem3(self):
+		return "Hex"
+
+	# Get the box
+	def getBox(self):
+		return self.__box
+
+	# Get the corners (2 dim)
+	def getCorners2(self):
+		box = self.getBox()
+		return [ [ box[0][0], box[0][1], box[0][2] ],
+                   	 [ box[1][0], box[0][1], box[0][2] ],
+                    	 [ box[1][0], box[1][1], box[0][2] ],
+                    	 [ box[0][0], box[1][1], box[0][2] ] ]
+
+	# Get the corners (3 dim)
+	def getCorners3(self):
+		box = self.getBox()
+        	return [ [ box[0][0], box[0][1], box[0][2] ],
+                    	 [ box[1][0], box[0][1], box[0][2] ],
+                    	 [ box[1][0], box[1][1], box[0][2] ],
+                    	 [ box[0][0], box[1][1], box[0][2] ],
+                    	 [ box[0][0], box[0][1], box[1][2] ],
+                    	 [ box[1][0], box[0][1], box[1][2] ],
+                    	 [ box[1][0], box[1][1], box[1][2] ],
+                    	 [ box[0][0], box[1][1], box[1][2] ] ]
+
+	# Get number of corners
+	def getNumCorners(self):
+		return 4*(${DIM}-1)
+
+	# Get the domain (2 dim)
+	def getDomain2(self):
+		box = []
+		[ box.extend(v[0:2]) for v in self.getCorners2() ]
+		return "Quadrilateral $x0 %f %f $x1 %f %f $x2 %f %f $x3 %f %f" % tuple(box)
+
+	# Get the domain (3 dim)
+	def getDomain3(self):
+		box = []
+		[ box.extend(v) for v in self.getCorners3() ]
+		return "Hexahedron $x0 %f %f %f $x1 %f %f %f $x2 %f %f %f $x3 %f %f %f $x4 %f %f %f $x5 %f %f %f $x6 %f %f %f $x7 %f %f %f" % tuple(box)
+
+	# Read mesh data from an XML file
+	# @param filename	name of the input xml file
+	def readXML(self, filename):
+		self.__nds = []
+		self.__els = []
+		self.__vec = []
+
+		def InterpretLoadbal(arg):
+			%parse (STRING arg)
+				%block (loadbal)
+					(mandatory int strategy -> self.__lbs)
+				%kcolb
+			%esrap
+
+			if 9 == self.__lbs:
+				%parse (STRING arg)
+					(mandatory int[*] map -> self.__lbmap)
+				%esrap
+
+		def AddVector(arg):
+			%parse (STRING arg)
+				%block (vector)
+					(mandatory int    ncomps -> ncomps)
+					(mandatory int    num    -> num)
+					(mandatory string dof    -> dof)
+				%kcolb
+			%esrap
+
+			if   'node' == dof:
+				self.__vec.append([ ncomps, num, 0 ])
+			elif 'element' == dof:
+				self.__vec.append([ ncomps, num, 1 ])
+			else:
+				sys.exit(" ERROR: Unknown dof type %s." % dof)
+
+		AppendNode = lambda arg: self.__nds.append(arg)
+		AppendEl   = lambda arg: self.__els.append(arg)
+
+		# Parse the input file. The DSL syntax is 
+                %parse (FILE filename)
+			%block (simulation)
+				%block (fesolver)
+					%block (ug)
+        	                	        (mandatory something loadbal => InterpretLoadbal)
+	
+                	                	%block (vectors)
+                        	      	        	*(something vector   => AddVector)
+                                		%kcolb
+
+						%block (mesh, mandatory int dim -> dim)
+							%block (nodes)
+								*(float[3]  node     => AppendNode)
+							%kcolb
+							%block (elements) 
+								*(int[*]    element  => AppendEl)
+							%kcolb
+						%kcolb
+					%kcolb
+				%kcolb
+			%kcolb
+		%esrap
+
+		if ${DIM} != dim:
+			sys.exit(" ERROR: Mesh has wrong dimension.")
+
+		self.createBoundingbox()
+
+
+	# Create the bounding box
+	def createBoundingbox(self):
+		self.__box = [ [ self.__nds[0][0], self.__nds[0][1], self.__nds[0][2] ],
+			       [ self.__nds[0][0], self.__nds[0][1], self.__nds[0][2] ] ]
+		for nd in self.__nds:
+			for d in (0,1,2):
+				self.__box[0][d] = min(self.__box[0][d], nd[d])
+				self.__box[1][d] = max(self.__box[1][d], nd[d])
+
+	# Compute the distance between points
+	# @param x	first vector
+	# @param y	second vector
+	def distance(self, x, y):
+		return math.fabs(x[0]-y[0]) + math.fabs(x[1]-y[1]) + math.fabs(x[2]-y[2])
+
+	# Make sure that the corner nodes are the first to appear
+	def ReorderNodes(self):
+		corners   = self.getBox() 
+		cornerIdx = {}
+
+        	for i,nd in enumerate(self.__nds):
+			for j,c in enumerate(self.getCorners${DIM}()):
+				if self.distance(nd, c) < 1e-12:
+					cornerIdx[j] = i
+
+		assert self.getNumCorners() == len(cornerIdx.keys())
+
+		for i,v in cornerIdx.items():
+			for j,w in cornerIdx.items():
+				if j > i and w == i:
+					cornerIdx[j] = v
+
+		for i,v in cornerIdx.items():
+			for d in (0,1,2):
+				self.__nds[i][d],self.__nds[v][d] = self.__nds[v][d],self.__nds[i][d]
+
+			for el in self.__els:
+				for j,w in enumerate(el):
+					if w == i:
+						el[j] = v
+					if w == v:
+						el[j] = i
+
+	# Find boundary nodes
+	def findBoundaryNodes(self):
+		mapping2 = [ [ 0, 0, 3 ],
+			     [ 0, 1, 1 ],
+			     [ 1, 0, 0 ],
+			     [ 1, 1, 2 ] ]
+		mapping3 = [ [ 0, 0, 1 ],
+			     [ 0, 1, 4 ],
+			     [ 1, 0, 2 ],
+			     [ 1, 1, 5 ],
+			     [ 2, 0, 0 ],
+			     [ 2, 1, 3 ] ]
+
+		bnd     = {}
+		for i,nd in enumerate(self.__nds):
+			for v in mapping${DIM}:
+				if math.fabs(nd[v[0]] - self.getBox()[v[1]][v[0]]) < 1e-12:
+					bnd[i] = v[2]
+
+		return bnd
+
+	# Insert nodes
+	def InsertEverything(self):
+		self.ReorderNodes()
+		bnd = self.findBoundaryNodes()
+
+		for i,nd in enumerate(self.__nds):
+			if i >= self.getNumCorners():
+				if i in bnd.keys():
+					self.InsertBnd(bnd[i], self.paramBndNode(nd, bnd[i]))
+				else:
+					self.InsertInd(nd)
+
+		for el in self.__els:
+			self.InsertIel(el)
+
+	# Compute the parametrized value of a boundary node
+	# @param nd	the node
+	# @param side	the cuboid 
+	def paramBndNode(self, nd, side):
+		size = []
+		[ size.append(self.getBox()[1][d] - self.getBox()[0][d]) for d in (0,1,2) ]
+
+		mapd = None
+		if 2 == ${DIM}:
+			mapd = { 0 : [    (nd[0] - self.getBox()[0][0])/size[0] ],
+				 1 : [    (nd[1] - self.getBox()[0][1])/size[1] ],
+				 2 : [ 1.-(nd[0] - self.getBox()[0][0])/size[0] ],
+				 3 : [    (nd[1] - self.getBox()[0][1])/size[1] ] }
+		if 3 == ${DIM}:
+			mapd = { 0 : [ (nd[0] - self.getBox()[0][0])/size[0], (nd[1] - self.getBox()[0][1])/size[1] ],
+				 1 : [ (nd[1] - self.getBox()[0][1])/size[1], (nd[2] - self.getBox()[0][2])/size[2] ],
+				 2 : [ (nd[0] - self.getBox()[0][0])/size[0], (nd[2] - self.getBox()[0][2])/size[2] ],
+				 3 : [ (nd[0] - self.getBox()[0][0])/size[0], (nd[1] - self.getBox()[0][1])/size[1] ],
+				 4 : [ (nd[1] - self.getBox()[0][1])/size[1], (nd[2] - self.getBox()[0][2])/size[2] ],
+				 5 : [ (nd[0] - self.getBox()[0][0])/size[0], (nd[2] - self.getBox()[0][2])/size[2] ] }
+
+		return mapd[side]
+

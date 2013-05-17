@@ -1,0 +1,46 @@
+
+import maciS${DIM} as maciS
+
+from ProcElement        import ProcMD, ProcFE
+from DampingMethodProxy import *
+from PluginTable        import *
+
+
+# Pure (uncoupled) verlet integrator
+class VerletIntegrator(maciS.VerletIntegrator):
+
+	# Create a new instance
+	# @param[in]	app	the Maci application instance
+	# @param[in]	xmlstr	input XML string with the specifications
+	def __init__(self, app, xmlstr):
+		# Store a reference to app
+		self.__app = app
+
+		def CreateDamper(arg):
+			self.damper  = DampingMethodProxy(app, arg)
+
+		def CreatePluginTable(arg):
+			self.plugins = PluginTable(app, arg)
+
+		%parse (STRING xmlstr)
+			%block (verlet)
+				(mandatory int nsteps            -> self.nsteps)
+				(mandatory float tau             -> self.tau)
+				(mandatory something damping     => CreateDamper)
+				(mandatory something plugintable => CreatePluginTable)
+			%kcolb
+		%esrap
+
+		# Pass the plugin table to the Maci instance
+		app.plugins = self.plugins
+
+		maciS.VerletIntegrator.__init__(self, app, self.damper.obj)
+
+
+	# Run the simulation. Since the runVerlet function is defined
+	# on the Python level by derived class we need to pass the solver
+	# (or system) explicitly to this function
+	# @param[in]	t	MD system or FE solver
+	def run(self, t):
+		t.runVerlet(self.nsteps, self)
+

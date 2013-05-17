@@ -1,0 +1,26 @@
+
+# vi: tabstop=4:expandtab
+
+from maciS${DIM}            import Maci, Log
+
+from FESolver               import *
+from MMSystem               import *
+from PatchyHandshakeGeo     import *
+from InterpolationWeights   import *
+from DampingMethodProxy     import *
+from RattleCorrectorProxy   import *
+from ParticleList           import *
+from RattleIntegrator       import *
+from VerletIntegrator       import *
+from Projection             import *
+from ProcElement            import *
+from TimeIntegratorProxy    import *
+from FilterProxy            import *
+
+from main                   import main
+from initconds              import ApplyInitialConditions
+
+# Export it (for the MACI driver script) but
+# hide it
+import InputPath as _InputPath
+

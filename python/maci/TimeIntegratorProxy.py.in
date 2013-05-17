@@ -1,0 +1,41 @@
+
+import maciS${DIM} as maciS
+
+from RattleIntegrator import *
+from VerletIntegrator import *
+
+
+# The TimeIntegratorProxy provides a single interface for
+# multiple time integrators. Based on the choice of a time
+# integrator in the input file, the proxy will behave exactly
+# like a member of this class to the outside.
+# Note that the choice of the integrator is done purely
+# based on the presence of the specification elements. If
+# you specify the settings for multiple different integrators
+# the last one will be chosen but all of them will be created
+# initially
+class TimeIntegratorProxy:
+
+	# Create a new instance
+	# @param[in] app	the Maci application instance
+	# @param[in] xmlfile	the input specfile
+	def __init__(self, app, xmlfile):
+		def CreateRattle(arg):
+			self.obj = RattleIntegrator(app, arg)
+		def CreateVerlet(arg):
+			self.obj = VerletIntegrator(app, arg)
+
+		%parse (FILE xmlfile)
+			%block (simulation)
+				*(something rattle => CreateRattle)
+				*(something verlet => CreateVerlet)
+			%kcolb
+		%esrap
+		
+		app.integrator = self.obj
+
+
+	# Forward all requests to the object
+	def __getattr__(self, attrib):
+		return getattr(self.obj, attrib)
+

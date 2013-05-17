@@ -1,0 +1,239 @@
+
+import math
+
+import InputPath
+import maciS${DIM} as maciS
+
+from   FESolverBase import FESolverBase   as Base
+
+# The mscoupling python interface
+import ug
+import cb${DIM}  as cb
+import le${DIM}  as le
+
+
+# Wrapper a UG mesh and all things needed to run the finite element elasticity
+# model
+class FESolver(maciS.SolverImplementation, Base):
+	
+	# Create a new instance
+	# @param comm		the communicator for the UG module
+	# @param filename	filename to read input data from
+	def __init__(self, comm, filename):
+		# Store a copy of the communiator
+		self.__comm = comm
+
+		Base.__init__ (self)
+		
+		self.mesh = ug.Mesh(comm.handle(), filename)
+		maciS.SolverImplementation.__init__(self, self.mesh)
+
+		# Parse the XML File
+		%parse (FILE filename)
+			%block (simulation)
+				%block (fesolver)
+					%block (ug)
+						%block (constitutiveeq)
+							(mandatory string type   -> self.ce_type)
+							(optional  float  lambda -> self.ce_lambda)
+							(optional  float  mu	 -> self.ce_mu)
+							(optional  float  sigma  -> self.ce_sigma)
+							(optional  float  eps	-> self.ce_eps)
+							(optional  float  rcut   -> self.ce_rcut)
+						%kcolb
+
+						(mandatory float	 rho	-> self.rho0)
+						(mandatory int	   qorder -> self.qorder)
+
+						(optional something neumann   -> self.neumann)
+						(optional something dirichlet -> self.dirichlet)
+						(optional something weakdir   -> self.weakdir)
+					%kcolb
+				%kcolb
+			%kcolb
+		%esrap
+
+
+	# Initialize the module. This function must be called <b>after</b> the
+	# processing element has been created since the node distribution is
+	# only well defined afterwards
+	def init(self, app):
+
+		# Weighted density
+		self.rho1 = lambda x,y,z: self.rho0
+		self.rho2 = lambda x,y,z: self.rho0*app.weights.val([x,y,z])
+
+		# PyObject version of the densities
+		self.rho3 = ug.FunctionPyObj(self.rho1)
+		self.rho4 = ug.FunctionPyObj(self.rho2)
+
+		# Assemble unweighted mass matrix
+		self.AssembleUnweightedMassMatrix(self.rho3, 1)
+		# Assemble the weighted mass matrix
+		self.AssembleWeightedMassMatrix  (self.rho4, 1)
+		
+		# "cbw" and "lew" corresponds to weighted constitutive equations
+		# and hence weighted mass matrices
+		if self.ce_type in [ "cbw", "lew" ]:
+			self.imat = self.wmat
+			self.rho5 = self.rho4
+		else:
+			self.imat = self.umat
+			self.rho5 = self.rho4
+
+		# Create the force calculator from the specification of
+		# the constitutive equation. 
+		# At the same time we create the energy calculator
+		if self.ce_type in [ "cb", "cbw" ]:
+			self.AddForceCalc(cb.ForceCalculator${DIM}(self.mesh, 
+								   self.GetU(), 
+								   self.rho5, 
+								   self.qorder, 
+								   self.ce_sigma, 
+								   self.ce_eps, 
+								   self.ce_rcut))
+			self.SetEnergyCalc(cb.EnergyCalculator${DIM}(self.mesh,
+									 self.GetU(), 
+									 self.rho5,
+									 self.qorder, 
+									 self.ce_sigma,
+									 self.ce_eps,
+									 self.ce_rcut))
+		if self.ce_type in [ "le", "lew" ]:
+			self.AddForceCalc(le.ForceCalculator${DIM}(self.mesh,
+								   self.GetU(),
+								   self.rho5,
+								   self.qorder,
+								   self.ce_lambda,
+								   self.ce_mu))
+			self.SetEnergyCalc(le.EnergyCalculator${DIM}(self.mesh,
+						 			 self.GetU(),
+									 self.rho5,
+									 self.qorder,
+									 self.ce_lambda,
+									 self.ce_mu))
+
+		# Boundary conditions
+		# Neumann boundary 
+		self.T0 = None
+		if None != self.neumann:
+			maciS.Log.Instance().write("Enforcing Neumann boundary conditions.\n")
+
+			%parse (STRING self.neumann)
+				%block (neumann)
+					(mandatory string file	  -> file)
+					(mandatory string functions -> functions)
+				%kcolb
+			%esrap
+
+			# Define the functions by executing the script.
+			# This is a security hole ;)
+			execfile(file)
+
+			# Get handles to the function
+			func0 = eval(functions.split(";")[0])
+			func1 = eval(functions.split(";")[1])
+			func2 = maciS.IntFunctionPyObj3		   (func0)
+			func3 = maciS.RealVectorFunctionPyObj43(func1)
+
+			self.T0 = maciS.NeumannForceCalculator(self, func2, func3)
+			self.AddForceCalc(self.T0)
+
+		# Dirichlet values
+		self.T1 = None
+		if None != self.dirichlet:
+			maciS.Log.Instance().write("Enforcing Dirichlet boundary conditions.\n")
+
+			%parse (STRING self.dirichlet)
+				%block (dirichlet)
+					(mandatory string file	    -> file)
+					(mandatory string functions -> functions)
+				%kcolb
+			%esrap
+
+			# Define the functions by executing the script.
+			# This is a security hole ;)
+			execfile(file)
+
+			# Get handles to the function
+			func1 = maciS.IntFunctionPyObj3		   (eval(functions.split(";")[0]))
+			func2 = maciS.RealVectorFunctionPyObj43(eval(functions.split(";")[1]))
+
+			self.T1 = maciS.DirichletEnforcer(self, func1, func2)
+			self.SetDirichletEnforcer(self.T1)
+
+		# Weak dirichlet values
+		self.T2 = None
+		if None != self.weakdir:
+			maciS.Log.Instance().write("Enforcing Weak Dirichlet boundary conditions.\n")
+
+			%parse (STRING self.weakdir)
+				%block (weakdir)
+					(mandatory string file	    -> file)
+					(mandatory string functions -> functions)
+					(mandatory float  beta	    -> beta)
+				%kcolb
+			%esrap
+
+			# Define the functions by executing the script.
+			# This is a security hole ;)
+			execfile(file)
+
+			# Get handles to the function
+			func0 = eval(functions.split(";")[0])
+			func1 = eval(functions.split(";")[1])
+			func2 = maciS.IntFunctionPyObj3        (func0)
+			func3 = maciS.RealVectorFunctionPyObj43(func1)
+
+			self.T2 = maciS.DirichletForceCalculator(self, func2, func3, beta)
+			self.AddForceCalc(self.T2)
+
+
+	# Destructor
+	def __del__(self):
+		del self.mesh
+
+	# Verlet integration
+	# @param[in]	nsteps		number of steps
+	# @param[in]	integrator	integrator
+	def runVerlet(self, nsteps, integrator):
+		maciS.UgVerletIntegrator(self, integrator.tau, integrator).Run(nsteps)
+
+	# Rattle integration
+	# @param[in]	nsteps		number of steps
+	# @param[in]	integrator	integrator
+	def runRattle(self, nsteps, integrator):
+		maciS.UgRattleIntegrator(self, integrator.tau, integrator).Run(nsteps)
+
+	# Compute the center of mass of the geometry
+	def CenterOfMass(self, midpt):
+		self.mesh.centerOfMass(midpt)	
+
+	# Initialize the displacement values with the return values of the
+	# function func evaluated at the mesh nodes
+	def ApplyFunctionDispl(self, func):
+		nd = self.mesh.NodesBegin()
+		while True:
+			if 2 == ${DIM}:
+				self.GetU()[nd] = func(nd[0], nd[1], 0.0)
+			else:
+				self.GetU()[nd] = func(nd[0], nd[1], nd[2])
+			if nd.hasNext(self.mesh):
+				nd.next()
+			else:
+				break
+
+	# Initialize the velocity values with the return values of the function
+	# func at the mesh nodes
+	def ApplyFunctionVel  (self, func):
+		nd = self.mesh.NodesBegin()
+		while True:
+			if 2 == ${DIM}:
+				self.GetV()[nd] = func(nd[0], nd[1], 0.0)
+			else:
+				self.GetV()[nd] = func(nd[0], nd[1], nd[2])
+			if nd.hasNext(self.mesh):
+				nd.next()
+			else:
+				break
+

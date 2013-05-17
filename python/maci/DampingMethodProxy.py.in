@@ -1,0 +1,81 @@
+
+import sys
+import math
+
+import maciS${DIM} as maciS
+
+from FilterProxy import *
+
+
+# The DampingMethodProxy provides a single interface for the
+# multiple supported damping methods
+class DampingMethodProxy:
+
+	# Create a new instance
+	# @param[in] app	Maci application instance
+	# @param[in] xmlstr	XML string to read input data from
+	def __init__(self, app, xmlstr):
+
+		%parse (STRING xmlstr)
+			%block (damping)
+				(mandatory string type      -> self.type)
+
+				(optional  float  constant  -> self.constant)
+				(optional  string coeff     -> self.coeff)
+			%kcolb
+		%esrap
+
+		if "noop" != self.type and None == self.constant and None == self.coeff:
+			sys.exit(" ERROR: Neither <constant> nor <coeff> specified.")
+		if "noop" != self.type and None != self.constant and None != self.coeff:
+			sys.exit(" ERROR: <constant> and <coeff> are mutually exclusive.")
+
+		# The damping coefficient function can either be given as an
+		# analytic function or defined as constant times (1 - weighting) 
+
+		# squared
+		if None != self.coeff:
+			self.D = maciS.RealFunctionPyObj3(lambda x,y,z: eval(self.coeff))
+		else:
+			self.D = maciS.RealFunctionPyObj3(lambda x,y,z: self.constant*pow(1. - app.weights.val([x,y,z]),2))
+
+		# Create the fluctuation filter for the damper. Since this is costly
+		# we only want to do it if the filter will actually be used
+		def CreateFilter(arg):
+			self.Q = FilterProxy(app, arg)
+
+		if "pmlff" == self.type or "frictionff" == self.type:
+			%parse (STRING xmlstr)
+				%block (damping)
+					(optional  something filter => CreateFilter)
+				%kcolb
+			%esrap
+		else:
+			self.Q = None
+
+		# We would like to call the init() function of the derived
+		# damper class and pass self as first argument but this does not
+		# work!
+		if   "noop"	== self.type:
+			self.obj = maciS.NoopDamper(app)
+		elif "friction"   == self.type:
+			self.obj = maciS.FrictionDamper(app, self.D)
+		elif "frictionff" == self.type:
+			self.obj = maciS.FrictionFineFluctuationDamper(app, self.Q.obj, self.D)
+		elif "pml"	== self.type:
+			self.obj = maciS.PMLDamper(app, self.D)
+		elif "pmlff"      == self.type:
+			self.obj = maciS.PMLFineFluctuationDamper(app, self.Q.obj, self.D)
+		else:
+			sys.exit(" ERROR: Unsupported damping type '%s'!" % self.type)
+
+	# Destructor
+	def __del__(self):
+		del self.D
+		del self.Q
+		del self.obj
+
+	# Forward all requests to the object
+	def __getattr__(self, attrib):
+		return getattr(self.obj, attrib)
+

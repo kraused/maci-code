@@ -1,0 +1,86 @@
+
+import math
+
+from ProcElement import ProcMD, ProcFE
+from maciS${DIM} import Log
+
+
+# In this file a collection of functions
+# is maintained that can be used by the
+# XML spec files in the <initcond> element
+# to create complicated initial conditions
+
+# Store a reference to the FESolver or MMSystem
+# so that we can access it in the predefined
+_gmidpt = [ 0.0, 0.0, 0.0 ]
+
+def RadialWave(x, y, z, **kwargs):
+	A     = kwargs["A"]
+	sigma = kwargs["sigma"]
+	b     = kwargs["b"]
+	Lc    = 5*sigma;
+	uc    = math.exp(-pow(Lc,2)/pow(sigma,2));
+	H     = 0.25*sigma;
+
+	midpt = []
+	try:
+		midpt = kwargs["midpoint"]
+	except:
+		global _gmidpt
+		midpt = _gmidpt
+
+	q = [ x - midpt[0], y - midpt[1], z - midpt[2] ]
+	r = math.sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])
+	v = A*(A*math.exp(-pow(r,2)/pow(sigma,2)))/(A - uc)*(1 + b*math.cos((2*math.pi*r)/H))/r
+
+	return [ v*q[0], v*q[1], v*q[2] ]
+
+# The function ApplyIC parses the input xml file for
+# the definition of the initial conditions (given as an
+# analytical function with reference to some predefined
+# functions) and applies them to the mesh nodes or 
+# the particles.
+# Since the ApplyFunction???() functions are most easily
+# implemented on the python level we need to pass the
+# (wrapped) FESolver/MMSystem instance as the third argument
+def ApplyInitialConditions(app, xmlfile, t):
+	# Parse the xml file
+	if ProcMD == app.procel.mytype:
+		%parse (FILE xmlfile)
+			%block (simulation)
+				%block (mmsystem)
+					(string initcondsu -> funcu)
+					(string initcondsv -> funcv)
+				%kcolb
+			%kcolb
+		%esrap
+	if ProcFE == app.procel.mytype:
+		%parse (FILE xmlfile)
+			%block (simulation)
+				%block (fesolver)
+					(string initcondsu -> funcu)
+					(string initcondsv -> funcv)
+				%kcolb
+			%kcolb
+		%esrap
+
+	# Default is zero initial conditions
+	if None == funcu:
+		Fu = lambda x,y,z: [ 0.0, 0.0, 0.0 ]
+	else:
+		Fu = eval("lambda x,y,z: %s" % funcu)
+
+	if None == funcv:
+		Fv = lambda x,y,z: [ 0.0, 0.0, 0.0 ]
+	else:
+		Fv = eval("lambda x,y,z: %s" % funcv)
+	
+	# Compute the midpoint as it can be referenced in the 
+	# predefined functions
+	t.CenterOfMass(_gmidpt)
+	Log.Instance().write("Taking [ %f, %f, %f ] as center of mass for initial conditions.\n" % (_gmidpt[0], _gmidpt[1], _gmidpt[2]))
+
+	# Apply the functions
+	t.ApplyFunctionDispl(Fu)
+	t.ApplyFunctionVel  (Fv)
+

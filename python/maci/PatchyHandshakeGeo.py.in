@@ -1,0 +1,49 @@
+
+import sys
+import maciS${DIM} as maciS
+
+
+# Wrapper around the handshake geometry and associated quantities such as the
+# weighting
+class PatchyHandshakeGeo(maciS.PatchyHandshakeGeo):
+	
+	# Create a new instance
+	# @param app		the MACi application instance
+	# @param xmlfile	xmlfile to read input data from
+	def __init__(self, app, xmlfile):
+		maciS.PatchyHandshakeGeo.__init__(self, app)
+
+		# Add a primitive
+		def AddPrimitive(arg):
+			%parse (STRING arg)
+				%block (primitive)
+					(mandatory string type -> type)
+				%kcolb
+			%esrap
+
+			if "cuboid" == type:
+				%parse (STRING arg)
+					%block (primitive)
+						(mandatory float[*] patch -> c)
+						(mandatory float[*] vals  -> v)
+					%kcolb
+				%esrap
+				
+				self.AddNewPrimitive(maciS.Cuboid(c))
+			else:
+				sys.exit(" ERROR: Unsupported type '%s'!" % type)
+
+		%parse (FILE xmlfile)
+                        %block (simulation)
+                                %block (handshake, mandatory int dim -> dim)
+					*(something primitive => AddPrimitive)
+                                %kcolb
+                        %kcolb
+                %esrap
+
+                if ${DIM} != dim:
+			sys.exit(" ERROR: Handshake geometry has wrong dimension!")
+		# done parsing
+
+		self.Update()
+

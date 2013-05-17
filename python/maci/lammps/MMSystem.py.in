@@ -1,0 +1,131 @@
+
+import sys
+
+import maciS${DIM} as maciS
+import InputPath
+
+from   MMSystemBase import MMSystemBase as Base
+
+# Wrapper around a Lammps instance
+class MMSystem(maciS.LammpsInstance, Base):
+
+	# Create a new instance
+	# @param	comm		the communicator for the UG module
+	# @param	filename	xml file to read input data from
+	def __init__(self, comm, filename):
+		maciS.LammpsInstance.__init__(self, comm.handle())
+
+		Base.__init__(self)
+		self.readXML(filename)
+
+		self.execute("dimension ${DIM}")
+
+		# If the users specifies the processors use these values
+		if None != self.__pes:
+			self.execute("processors %d %d %d" % tuple(self._pes))
+
+		# Atomic vector style
+		self.setAtomStyle("atomic")
+		# Use bins to build the neighbor list with skin radius 0.3
+		self.execute("neighbor	%f bin" % self.__skin)
+		# Modify the neighbor list each timestep
+		self.execute("neigh_modify    every 1")
+
+		# Define the units
+		self.execute("units lj")
+
+		self.read(self.__file)
+
+		# -----
+		# Test code
+		#
+		# self.execute("lattice fcc 1.0")
+		# self.execute("region box    block 0.0 50.242550 0.0 112.278550 0.0 50.242550 units box")
+		# self.execute("region subbox block 9.8 40.742550 9.8 102.778550 9.8 40.742550 units box")
+		# self.execute("create_box   1 box")
+		# self.execute("create_atoms 1 region subbox")
+		# self.execute("mass 1 1.0")
+		# -----
+
+		if "lj"  == self.__pair_type:
+			self.Set_Pair_Style_LJ(self.__rcut)
+		if "ljw" == self.__pair_type:
+			self.Set_Pair_Style_LJ_Weighted(self.__rcut)
+
+		self.execute("pair_coeff * * %f %f %f" % (self.__eps, self.__sigma, self.__rcut))
+
+	# Initialize the module.
+	def init(self, app):
+		# Run the NoOpIntegrator to initialize the memory
+		self.run_no_op()
+		
+		# Install the computes.
+		self.computes().Install_computes(self)
+
+	# Read mesh data from an XML file
+	# @param filename	input file name
+	def readXML(self, filename):
+		self.__pes = None
+
+		%parse (FILE filename)
+			%block (simulation)
+				%block (mmsystem)
+
+					%block (lammps)
+						(mandatory string datafile   -> self.__file)
+					      	(optional  int[3] processors -> self.__pes)
+
+						%block(pair)
+							(mandatory string type  -> self.__pair_type)
+							(mandatory float  skin  -> self.__skin)
+							(mandatory float  rcut  -> self.__rcut)
+							(mandatory float  eps   -> self.__eps)
+							(mandatory float  sigma -> self.__sigma)
+						%kcolb
+					%kcolb
+				%kcolb
+			%kcolb
+		%esrap
+
+		if not self.__pair_type in [ "lj", "ljw" ]:
+			sys.exit(" ERROR: Invalid pair potential type.")
+
+		# Find the file in the input path and replace self.__file by the
+		# absolute path
+		self.__file = InputPath.FindInPath(self.__file)
+
+	# Verlet integration
+	# @param[in]	nsteps		number of steps
+	# @param[in]	integrator	integrator
+	def runVerlet(self, nsteps, integrator):
+		# Modify the timestep size
+		self.execute("timestep %f" % integrator.tau)
+
+		self.installVerletIntegrator(integrator)
+		self.run(nsteps)
+
+	# Rattle integration
+	# @param[in]	nsteps		number of steps
+	# @param[in]	integrator	integrator
+	def runRattle(self, nsteps, integrator):
+		# Modify the timestep size
+		self.execute("timestep %f" % integrator.tau)
+		
+		self.installRattleIntegrator(integrator)
+		self.run(nsteps)
+
+	# Initialize the particle displacements with the values of the function
+	# func (which should return a list of length three) at the particle
+	# positions
+	def ApplyFunctionDispl(self, func):
+		for i in range(0, self.numParticles()):
+			t = func(self.ParticlePos(i,0), self.ParticlePos(i,1), self.ParticlePos(i,2))
+			self.SetParticleDispl(i, t[0], t[1], t[2])
+
+	# Initalize the velocities with the values of the function func
+	# at the particle positions
+	def ApplyFunctionVel  (self, func):
+		for i in range(0, self.numParticles()):
+			t = func(self.ParticlePos(i,0), self.ParticlePos(i,1), self.ParticlePos(i,2))
+			self.SetParticleVel  (i, t[0], t[1], t[2])
+

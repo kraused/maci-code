@@ -1,0 +1,57 @@
+
+import maciS${DIM} as maciS
+
+from ProcElement          import ProcMD, ProcFE
+from DampingMethodProxy   import *
+from PluginTable          import *
+from RattleCorrectorProxy import *
+
+
+# RATTLE time integrator
+class RattleIntegrator(maciS.RattleIntegrator):
+
+	# Create a new instance
+	# @param[in]	app	the Maci application instance
+	# @param[in]	xmlstr	input XML string with the specifications
+	def __init__(self, app, xmlstr):
+		# Store a reference to app
+		self.__app = app
+
+		self.damper = None
+		def CreateDamper(arg):
+			self.damper  = DampingMethodProxy(app, arg)
+
+		self.plugins = None
+		def CreatePluginTable(arg):
+			self.plugins = PluginTable(app, arg)
+		
+		self.corrector = None
+		def CreateCorrector(arg):
+			self.corrector = RattleCorrectorProxy(app, self.tau, arg)
+
+		# FIXME Due to clashes between primary and secondary assemblers
+		#       we must create the Corrector (which will add a primary
+		#	assembler for LsTransfer/L2Transfer) before the Damper
+		%parse (STRING xmlstr)
+			%block (rattle)
+				(mandatory int nsteps            -> self.nsteps)
+				(mandatory float tau             -> self.tau)
+				(mandatory something corrector   => CreateCorrector)
+				(mandatory something damping     => CreateDamper)
+				(mandatory something plugintable => CreatePluginTable)
+			%kcolb
+		%esrap
+
+		# Pass the plugins table to the Maci instance
+		app.plugins = self.plugins
+
+		maciS.RattleIntegrator.__init__(self, app, self.damper.obj, self.corrector.obj)
+
+
+	# Run the simulation. Since the runRattle function is defined
+	# on the Python level by derived class we need to pass the solver
+	# (or system) explicitly to this function
+	# @param[in]	t	MD system or FE solver
+	def run(self, t):
+		t.runRattle(self.nsteps, self)
+

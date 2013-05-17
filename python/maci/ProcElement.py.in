@@ -1,0 +1,82 @@
+
+import sys
+import maciS${DIM} as maciS
+
+ProcFE = maciS.PROC_FE
+ProcMD = maciS.PROC_MD
+
+# These must be global variables so that we can access it
+# in the interpret function in petype
+_md_pes = []
+_fe_pes = []
+
+# Read the type of the processing element from the 
+def petype(comm, specfile):
+	global _md_pes, _fe_pes
+
+	_md_pes = []
+	_fe_pes = []
+
+	# Interpret the input string from the xml file
+	def interpret(arg):
+		global _md_pes, _fe_pes
+
+		%parse (STRING arg)
+			%block (split)
+				(mandatory string npes -> str_npes)
+				(mandatory string md   -> str_md)
+				(mandatory string fe   -> str_fe)
+			%kcolb
+		%esrap
+
+		# if npes is not a number, i.e. a variable we need to 
+		# substitute the correct number of pes
+		if not str_npes.isdigit():
+			# Splittings where npes is a real number always
+			# overwrite the general splitting
+			if 0 != len(_md_pes) + len(_fe_pes):
+				return
+
+			str_md = re.sub(str_npes.strip(), "%d" % comm.size(), str_md)
+			str_fe = re.sub(str_npes.strip(), "%d" % comm.size(), str_fe)
+		else:
+			if int(str_npes) != comm.size():
+				return
+
+		_md_pes = eval(str_md)
+		_fe_pes = eval(str_fe)
+	# end of interpret
+
+	%parse (FILE specfile)
+		%block (simulation)
+			%block (procel)
+				*(something split => interpret)
+			%kcolb
+		%kcolb
+	%esrap
+
+	if comm.size() != len(_md_pes) + len(_fe_pes):
+		sys.exit(" ERROR: Invalid splitting ...")
+
+	if comm.rank() in _md_pes:
+		return ProcMD
+	if comm.rank() in _fe_pes:
+		return ProcFE
+
+	sys.exit(" ERROR: Invalid rank or invalid splitting ...")
+
+
+# Wrapper around the ProcElement class
+class ProcElement(maciS.ProcElement):
+
+	# Create a new instance
+	# @param[in] comm	the communicator
+	# @param[in] app	application type
+	# @param[in] xmlfile	the input file
+	def __init__(self, comm, app, xmlfile):
+		maciS.ProcElement.__init__(self, petype(comm, xmlfile), app)
+	
+	# Delete the instance
+	def __del__(self):
+		maciS.ProcElement.__del__(self)
+

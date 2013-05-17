@@ -1,0 +1,54 @@
+
+import sys
+
+import mpi
+import maciS${DIM} as maciS
+
+from ProcElement import *
+
+# Projection: For testing purposes it can be helpful to compute the projection
+#	     from the MD to the FE side. This class allows for doing this
+class Projection:
+
+	# Create a new instance
+	# @param[in]	app	the Maci application instance
+	# @param[in]	xmlfile	the input file
+	def __init__(self, app, xmlfile):
+		%parse (FILE xmlfile)
+			%block (simulation)
+				%block (projection)
+					(mandatory string   type  -> self.proj)
+					(optional  float[3] hdiam -> self.hdiam)
+				%kcolb
+			%kcolb
+		%esrap
+
+		if self.proj not in [ "ls", "l2" ]:
+			sys.exit(" ERROR: Unsupported projection type '%s'." % self.proj)
+
+		if "l2" == self.proj and None == self.hdiam:
+			sys.exit(" ERROR: Need 'hdiam' to compute L2 projection.")
+
+		if   "l2" == self.proj:
+			self.P = maciS.L2Projection(app, self.hdiam)
+		elif "ls" == self.proj:
+			self.P = maciS.LsProjection(app)
+
+
+	# Destructor
+	def __del__(self):
+		del self.P
+
+	# Project the MD velocities onto the FE velocities
+	# @param[in]	here	the ProcElement instance
+	def project(self, here, filename):
+		p = None
+		if ProcMD == here.mytype:
+			p = maciS.ParticleList()
+			p.AddSelectionHandshake(maciS.SelectHandshakeParticles())
+
+		self.P.project(p, filename)
+
+		if ProcMD == here.mytype:
+			del p
+

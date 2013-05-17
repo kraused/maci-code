@@ -1,0 +1,77 @@
+
+import sys
+import math
+
+import maciS${DIM} as maciS
+
+from ProcElement import ProcMD, ProcFE
+
+
+# The RattleCorrectorProxy provides a single interface for different
+# versions of the RattleCorrector class
+class RattleCorrectorProxy:
+
+	# Create a new instance
+	# @param[in] app	Maci application instance
+	# @param[in] tau	the timestep size of the time integrator
+	# @param[in] xmlstr	XML string to read input data from
+	def __init__(self, app, tau, xmlstr):
+
+		%parse (STRING xmlstr)
+			%block (corrector)
+				%block (projection)
+					(mandatory string   type  -> self.proj)
+					(optional  float[3] hdiam -> self.hdiam)
+				%kcolb
+				%block (solver)
+					(mandatory string type    -> self.solver)
+					(optional  int    maxiter -> self.maxiter)
+					(optional  float  tol     -> self.tol)
+				%kcolb
+			%kcolb
+		%esrap
+
+		# First we need to create the transfer operator
+		if   "l2" == self.proj:
+			self.R = maciS.L2Transfer(app, self.hdiam)
+		elif "ls" == self.proj:
+			self.R = maciS.LsTransfer(app)
+		else:
+			sys.exit(" ERROR: Invalid projection type '%s'!" % self.proj)
+
+		# Create the multiplier matrix
+		if   "l2" == self.proj and "umfpack"  == self.solver:
+			self.L = maciS.L2UmfpackMultiplierMatrix(app, self.hdiam)
+		elif "l2" == self.proj and "trilinos" == self.solver:
+			self.L = maciS.L2TrilinosMultiplierMatrix(app, self.hdiam, self.maxiter, self.tol)
+		elif "l2" == self.proj and "petsc"    == self.solver:
+			self.L = maciS.L2PetscMultiplierMatrix(app, self.hdiam, self.maxiter, self.tol)
+                elif "ls" == self.proj and "umfpack"  == self.solver:
+                        self.L = maciS.LsUmfpackMultiplierMatrix(app)
+                elif "ls" == self.proj and "trilinos" == self.solver:
+                        self.L = maciS.LsTrilinosMultiplierMatrix(app, self.maxiter, self.tol)
+                elif "ls" == self.proj and "petsc"    == self.solver:
+                        self.L = maciS.LsPetscMultiplierMatrix(app, self.maxiter, self.tol)
+
+		# Create the mass matrices on the FE processing elements
+		self.constraintsM = None
+		if   "l2" == self.proj:
+			self.constraintsM = maciS.TruncatedLumpedMeshMassMatrix(app.handshake)
+		elif "ls" == self.proj:
+			self.constraintsM = maciS.LsLumpedMeshMassMatrix(app.handshake)
+
+		# The matrix for correction on mesh processing elements
+		self.correctionM = None
+		if   "l2" == self.proj:
+			self.correctionM = maciS.RattleCorrectorTruncatedLumpedCorrectionMatrix(app.handshake)
+		elif "ls" == self.proj:
+			self.correctionM = maciS.RattleCorrectorLsLumpedCorrectionMatrix(app.handshake)
+
+		# Create the RattleCorrector instance
+		self.obj = maciS.RattleCorrector(app, tau, self.R, self.constraintsM, self.correctionM, self.L)
+
+
+        # Forward all requests to the object
+        def __getattr__(self, attrib):
+                return getattr(self.obj, attrib)
+

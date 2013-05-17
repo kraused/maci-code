@@ -1,0 +1,83 @@
+
+import maci${DIM} as maci
+
+# The main function executes the Maci program
+#
+# This is a user function which calls the 
+# Maci library via the "maci" module. Everything
+# that should be visable to the main function
+# must be included in __init__.py.
+#
+def main(comm, specfile):
+	app = maci.Maci()
+
+	# Note: The initialization is performed in steps
+	# and we add a barrier after each step. This ensures
+	# that all processing elements finish the step at
+	# the same time even if the work to be done is highly
+	# imbalanced
+
+	# Compute the type of the processing
+	# element
+	thetype = maci.petype(comm, specfile)
+	comm.barrier()
+
+	# Split the communicator comm into two pieces
+	# and create the MMSystem and the FESolver 
+	# instances
+	# Since we do not export the md::interface::System
+	# and fe::interface::FESolver classes to the python
+	# level we need to call Set???() functions rather
+	# than accessing the members directly
+	# To make sure that the garbage collection is not
+	# falsely killing the MMSystem/FESolver instance we
+	# store it in a temporary variable with this scope
+	subcomm = comm.split(thetype, comm.rank())
+	t0      = None
+	if maci.ProcMD == thetype:
+		t0 = maci.MMSystem(subcomm, specfile)
+		app.SetSystem(t0)
+	if maci.ProcFE == thetype:
+		t0 = maci.FESolver(subcomm, specfile)
+		app.SetSolver(t0)
+	comm.barrier()
+
+	# Initialize the procel structure
+	app.procel = maci.ProcElement(comm, app, specfile)
+	comm.barrier()
+
+	# Create the handshake geometry
+	app.handshake = maci.PatchyHandshakeGeo(app, specfile)
+	comm.barrier()
+
+	# Create the weighting function
+	app.weights = maci.InterpolationWeights(app, specfile)
+	comm.barrier()
+
+	# Assemble matrices, fill in the piggyback data ...
+	t0.init(app)
+	comm.barrier()
+
+	# Create the time integrator. This will trigger the
+	# construction of additional classes and also the
+	# plugins are loaded at this point
+	# Note that plugins should be loaded before the initial
+	# conditions are set because we might want, e.g., to
+	# measure the energy of the unstretched lattice as
+	# a reference value
+	ti = maci.TimeIntegratorProxy(app, specfile)
+
+	# Set initial conditions
+	maci.ApplyInitialConditions(app, specfile, t0)
+
+	comm.barrier()
+	maci.Log.Instance().write("========== Start of time integration ==========\n")
+
+	# Perform the time integration
+	ti.run(t0)
+
+	comm.barrier()
+	maci.Log.Instance().write("========== End of time integration ==========\n")
+
+	# Finished!
+

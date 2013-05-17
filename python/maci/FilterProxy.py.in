@@ -1,0 +1,47 @@
+
+import maciS${DIM} as maciS
+
+# The FilterProxy provides a single interface to multiple
+# available filters
+class FilterProxy:
+
+	# Create a new instance
+	# @param[in] app	Maci application instance
+	# @param[in] xmlstr     XML string to read input data from
+	def __init__(self, app, xmlstr):
+		%parse (STRING xmlstr)
+			%block (filter)
+				(mandatory string   type  -> self.type)
+				(optional  float[3] hdiam -> self.hdiam)
+			%kcolb
+		%esrap
+
+		if "l2" == self.type and None == self.hdiam:
+			sys.exit(" ERROR: Could not read 'hdiam'.")
+
+		if   "ls" == self.type:
+			self.obj = maciS.LsFineFluctutationFilter(app)
+		elif "l2" == self.type:
+			self.obj = maciS.L2FineFluctutationFilter(app, self.hdiam)
+		else:
+			sys.exit(" ERROR: Unsupported filter type '%s'!" % self.type)
+
+	# Destructor
+	def __del__(self):
+		del self.obj
+
+	# Apply the fine fluctuation filter to the velocities and store them again
+	# in the velocities
+	def apply(self, here, filename):
+		if ProcMD == here.mytype():
+			p = maciS.ParticleList()
+			p.AddSelectionHandshake(maciS.SelectHandshakeParticles())
+
+			self.obj.computeAndStoreInVelocity(p, filename)
+
+			del p
+
+#	# Forward all requests to the object
+#	def __getattr__(self, attrib):
+#		return getattr(self.obj, attrib)
+

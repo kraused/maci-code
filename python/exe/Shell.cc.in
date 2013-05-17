@@ -1,0 +1,52 @@
+//
+// Copyright (c) 2009 Institute of Computational Science, Universita della Svizzera italiana
+//
+
+// vi: tabstop=4:expandtab
+
+#include <Python.h>
+
+#ifdef HAVE_CONFIG_HH
+#include "config.hh"
+#endif
+
+int RunFile_As_Main(const char* filename, int argc, char** argv)
+{
+    int    i, n = 0, p_argc;
+    char   buf[4096];
+    char** p_argv;
+
+        p_argc = argc+1;
+    p_argv = new char*[p_argc+1];
+
+    p_argv[0] = buf;
+    n += snprintf(p_argv[0], sizeof(buf), argv[0])+1;
+
+#undef  NEXT_ARGV
+#define NEXT_ARGV(a)    ((a) + strlen((a)) + 1)
+
+    /// Insert the driver file here
+    p_argv[1] = NEXT_ARGV(p_argv[0]);
+    n += snprintf(p_argv[1], sizeof(buf), filename)+1;
+
+    for(i = 1; i < argc; ++i) 
+    {
+        p_argv[i+1] = NEXT_ARGV(p_argv[i]);
+        n += snprintf(p_argv[i+1], sizeof(buf)-n, argv[i])+1;
+    }
+    p_argv[p_argc] = NULL;
+
+    return Py_Main(p_argc, p_argv);
+}
+
+int main(int argc, char **argv)
+{
+    int err = EXIT_SUCCESS;
+
+    Py_Initialize();
+    err = RunFile_As_Main("${MACI_DRIVER_FILE}", argc, argv);
+    Py_Finalize();
+
+    return err;
+}
+

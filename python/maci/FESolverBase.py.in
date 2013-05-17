@@ -1,0 +1,14 @@
+
+import sys
+import InputPath
+
+# Common base class for all FESolver implementations
+class FESolverBase:
+
+	# The mesh file
+	_file = None
+
+	# Create a new instance
+	def __init__(self):
+		pass
+

@@ -1,0 +1,49 @@
+
+import sys
+import maciS${DIM}   as maciS
+import plugins${DIM} as plugins
+
+from ProcElement import ProcMD, ProcFE
+
+
+# Wrapper around the PluginTable class. This class
+# can parse the xml file and create/add the plugins
+class PluginTable(maciS.PluginTable):
+
+	# Create a new instance
+	# @param[in] app	the Maci application instance
+	# @param[in] xmlstr	XML input string
+	def __init__(self, app, xmlstr):
+		maciS.PluginTable.__init__(self, app)
+
+		def insert_plugin(arg):
+			%parse (STRING arg)
+				%block (plugin, mandatory string pes -> pes)
+				%kcolb
+			%esrap
+			pes = pes.lower()
+
+			if "md" != pes and "fe" != pes:
+				sys.exit(" ERROR: Invalid attribute pes = '%s'!" % pes)
+
+			if "md" == pes and ProcFE == app.procel.mytype:
+				return
+			if "fe" == pes and ProcMD == app.procel.mytype:
+				return
+
+			%parse (STRING arg)
+				(mandatory string plugin -> plugin)
+			%esrap
+
+			self.insert_plugin(eval(plugin))
+
+
+		%parse (STRING xmlstr)
+			%block (plugintable)
+				*(something plugin => insert_plugin)
+			%kcolb
+		%esrap
+
+		# Run the setup() for all plugins
+		self.setup()
+
