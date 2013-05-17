@@ -1,0 +1,150 @@
+#!/usr/bin/env python 
+
+import xml.dom.minidom
+import re
+import sys
+import optparse
+
+
+# Find a direct children of a node. We cannot use
+# getElementsByTagName for this because it searches
+# recursively and we don't want this behaviour
+def FindChildElements(node, name):
+        els = []
+
+        for c in node.childNodes:
+#               if c.nodeType in [ c.ELEMENT_NODE, c.ATTRIBUTE_NODE, c.TEXT_NODE ]:
+                if c.nodeName == name:
+                        els.append(c)
+
+        return els
+
+if __name__ == "__main__":
+	parser = optparse.OptionParser("usage: %prog [options] name")
+	(opts,args) = parser.parse_args()
+
+	if 1 != len(args):
+		parser.error("Expected meshfile as input")
+
+	nds = []
+	els = []
+
+	AppendNode = lambda arg: nds.append(arg)
+	AppendEl   = lambda arg: els.append(arg)
+
+	dim = None
+	
+	var001 = xml.dom.minidom.parseString(open(args[0],"r").read())
+	if None == var001:
+		print >> sys.stderr, "parser error: failed to open \"%s\"." % args[0]
+		sys.exit(128)
+	var002 = FindChildElements(var001, 'mesh')
+	if None == var002:
+		print >> sys.stderr, "parser error: no element with tag name \"mesh\"."
+		sys.exit(128)
+	if not ( len(var002) >= 1 ):
+		print >> sys.stderr, "parser error: \"mesh\" is a mandatory block."
+		sys.exit(128)
+	for var003 in var002:
+		var002 = var003
+		var004 = var002.getAttribute('dim')
+		if None == var004:
+			print >> sys.stderr, "parser error: \"dim\" is a mandatory attribute."
+			sys.exit(128)
+		if not ( len(var004) != 0 ):
+			print >> sys.stderr, "parser error: \"dim\" is a mandatory attribute."
+			sys.exit(128)
+		if 0 != len(var004):
+			var005 = int(var004)
+			dim = var005
+		var006 = FindChildElements(var002, 'nodes')
+		if None == var006:
+			print >> sys.stderr, "parser error: no element with tag name \"nodes\"."
+			sys.exit(128)
+		if not ( len(var006) >= 1 ):
+			print >> sys.stderr, "parser error: \"nodes\" is a mandatory block."
+			sys.exit(128)
+		for var007 in var006:
+			var006 = var007
+			var008 = FindChildElements(var006, 'node')
+			if 0 != len(var008):
+				for var009 in var008:
+					var010 = [ var009 ] 
+					var010 = var010[0].childNodes
+					if None == var010:
+						print >> sys.stderr, "parser error: found elment \"node\" without child nodes."
+						sys.exit(128)
+					if not ( len(var010) == 1 ):
+						print >> sys.stderr, "parser error: don't know to handle element with tag name \"node\" which has multiple child nodes."
+						sys.exit(128)
+					var010 = var010[0].data
+					if None == var010:
+						print >> sys.stderr, "parser error: data associated with \"node\" is None."
+						sys.exit(128)
+					var010 = var010.strip()
+					var010 = re.sub('(\t|\n)',' ', var010)
+					var010 = re.sub('[ ]+', ' ', var010)
+					var011 = var010.split(' ')
+					if not ( len(var011) == 3 ):
+						print >> sys.stderr, "parser error: variable node is expected to have length 3."
+						sys.exit(128)
+					var012 = []
+					[ var012.append(float(var013.strip())) for var013 in var011 ]
+					AppendNode(var012)
+		var014 = FindChildElements(var002, 'elements')
+		if None == var014:
+			print >> sys.stderr, "parser error: no element with tag name \"elements\"."
+			sys.exit(128)
+		if not ( len(var014) >= 1 ):
+			print >> sys.stderr, "parser error: \"elements\" is a mandatory block."
+			sys.exit(128)
+		for var015 in var014:
+			var014 = var015
+			var016 = FindChildElements(var014, 'element')
+			if 0 != len(var016):
+				for var017 in var016:
+					var018 = [ var017 ] 
+					var018 = var018[0].childNodes
+					if None == var018:
+						print >> sys.stderr, "parser error: found elment \"element\" without child nodes."
+						sys.exit(128)
+					if not ( len(var018) == 1 ):
+						print >> sys.stderr, "parser error: don't know to handle element with tag name \"element\" which has multiple child nodes."
+						sys.exit(128)
+					var018 = var018[0].data
+					if None == var018:
+						print >> sys.stderr, "parser error: data associated with \"element\" is None."
+						sys.exit(128)
+					var018 = var018.strip()
+					var018 = re.sub('(\t|\n)',' ', var018)
+					var018 = re.sub('[ ]+', ' ', var018)
+					var019 = var018.split(' ')
+					var020 = []
+					[ var020.append(int(var021.strip())) for var021 in var019 ]
+					AppendEl(var020)
+
+	avg_corners_per_el = 0
+	min_coords = [ +1e7, +1e7, +1e7 ]
+	max_coords = [ -1e7, -1e7, -1e7 ]
+
+	for n in nds:
+		min_coords = [ min(min_coords[0], n[0]),
+			       min(min_coords[1], n[1]),
+			       min(min_coords[2], n[2]) ]
+		max_coords = [ max(max_coords[0], n[0]),
+			       max(max_coords[1], n[1]),
+			       max(max_coords[2], n[2]) ]
+
+	for e in els:
+		avg_corners_per_el = avg_corners_per_el + len(e)
+	avg_corners_per_el = avg_corners_per_el/len(els)
+
+
+	print " MESH STATISTICS:"
+	print " DIM                    : %d"             % dim
+	print " NUM NODES              : %d"             % len(nds)
+	print " NUM ELEMENTS           : %d"   	         % len(els)
+	print " AVG CORNERS PER ELEMENT: %.1f"	         % avg_corners_per_el
+	print " MINIMAL COORDINATE     : [ %e, %e, %e ]" % (min_coords[0], min_coords[1], min_coords[2])
+	print " MAXIMAL COORDINATE     : [ %e, %e, %e ]" % (max_coords[0], max_coords[1], max_coords[2])
+

@@ -1,0 +1,7 @@
+
+pd2vtk: Converts from the "pd" file format to a vtk file.
+        The pd format has been used previously for debugging
+		purpose to have a simple (intermediate) format for
+		exporting points, lines and polygons. It is not
+		in use anymore.
+

@@ -1,0 +1,185 @@
+#!/usr/bin/env python
+
+import optparse
+import sys
+import os
+import xml.dom.minidom
+import tempfile
+
+import particles
+import export
+
+# Create a mesh
+def mesh(filename, h, patches):
+	doc = xml.dom.minidom.Document()
+
+	msh = doc.createElement("mesh")
+	msh.setAttribute("dim", "3")
+
+	H = doc.createElement("h")
+	H.appendChild(doc.createTextNode("%f" % h))
+	msh.appendChild(H)
+
+	for p in patches:
+		P = doc.createElement("patch")
+		P.appendChild(doc.createTextNode("%f %f %f %f %f %f" % tuple(p)))
+		msh.appendChild(P)
+
+	doc.appendChild(msh)
+
+	fh   = tempfile.NamedTemporaryFile()
+	name = fh.name
+	fh.close()
+	fh   = open(name, "w")
+	doc.writexml(fh, "", "\t", "\n", "UTF-8")
+	fh.close()	
+
+	# Call the mesher
+	os.system('${CMAKE_INSTALL_PREFIX}/bin/meshgen --out ' + filename + ' ' + name)
+
+	os.unlink(name)
+
+# Write the handshake file
+def handshake(filename, patches, vals):
+	doc = xml.dom.minidom.Document()
+
+	hs  = doc.createElement("handshake")
+	hs.setAttribute("dim", "3")
+
+	for i,p in enumerate(patches):
+		P = doc.createElement("primitive")
+
+		t = doc.createElement('type')
+		t.appendChild(doc.createTextNode("cuboid"))
+		P.appendChild(t)
+
+		q = doc.createElement("patch")
+		q.appendChild(doc.createTextNode("%f %f %f %f %f %f" % tuple(p)))
+		P.appendChild(q)
+
+		v = doc.createElement("vals")
+		v.appendChild(doc.createTextNode("%f %f %f %f %f %f %f %f" % tuple(vals[i])))
+		P.appendChild(v)
+
+		hs.appendChild(P)
+
+	doc.appendChild(hs)
+
+	fh   = open(filename, "w")
+	doc.writexml(fh, "", "\t", "\n")
+	fh.close()
+
+	# We need to chop of the first line to remove the <?xml ...>
+	# stuff so that we can include the mesh file wherever we want
+	t = "\n".join(open(filename, "r").read().split("\n")[1:])
+	open(filename, "w").write(t)
+
+
+# Write the md box
+def writebox(filename, box):
+	doc = xml.dom.minidom.Document()
+
+	b  = doc.createElement("box")
+	b.setAttribute("dim", "3")
+	b.appendChild(doc.createTextNode("%f %f %f %f %f %f" % tuple(box)))
+	
+	doc.appendChild(b)
+
+	fh   = open(filename, "w")
+	doc.writexml(fh, "", "\t", "\n")
+	fh.close()
+
+	# We need to chop of the first line to remove the <?xml ...>
+	# stuff so that we can include the mesh file wherever we want
+	t = "\n".join(open(filename, "r").read().split("\n")[1:])
+	open(filename, "w").write(t)
+
+
+# Choose atoms
+def choose(q, a, b, p):
+	if (p[0]-q[0])*(p[0]-q[0])/(a*a) + \
+	   (p[1]-q[1])*(p[1]-q[1])/(b*b) < 1:
+		return False
+	else:
+		return True
+
+if __name__ == "__main__":
+	parser = optparse.OptionParser("usage: %prog [options] name")
+	parser.add_option("--bdsize",
+			  action  = "store",
+			  type    = "float",
+			  dest    = "bdsize",
+			  help    = "length of bridging domain")
+	parser.add_option("--fesize",
+			  action  = "store",
+			  type    = "float",
+			  dest    = "fesize",
+			  help    = "length of FE domain perpendicular to handshake")
+	parser.add_option("--na",
+			  action  = "store",
+			  type    = "string",
+			  dest    = "na",
+			  help    = "approx. number of atoms in each direction")
+	parser.add_option("--rho",
+			  action  = "store",
+			  type    = "string",
+			  default = "0.387725 0.387725 0.387725",
+			  dest    = "rho",
+			  help    = "offset for lattice")
+	parser.add_option("--meshsize",
+			  action  = "store",
+			  type    = "float",
+			  dest    = "h",
+			  help    = "the approx. element size")
+	parser.add_option("--a",
+			  action  = "store",
+			  type    = "float",
+			  dest    = "a",
+			  help    = "the norm of the first semi-principal axis of the crack")
+	parser.add_option("--b",
+			  action  = "store",
+			  type    = "float",
+			  dest    = "b",
+			  help    = "the norm of the second semi-principal axis of the crack")
+	(opts,args) = parser.parse_args()
+
+	stamp = ''
+	for v in sys.argv:
+		stamp = "%s %s" % (stamp,v)
+	fh = open("stamp","w")
+	fh.write(stamp + "\n")
+	fh.close()
+
+	assert None != opts.h
+	assert None != opts.a
+	assert None != opts.b
+
+	rho = map(lambda v: float(v), opts.rho.strip().split(' '))
+	na  = map(lambda v:   int(v), opts.na.strip().split(' ') )
+
+	# Create the particle file
+	P   = particles.CreateFcc3ParticleList   (na, rho, lambda p: choose([ rho[0], rho[1] + 0.75*na[1] ],opts.a,opts.b,p))
+	box = particles.BoundingBoxOfParticleList(P , rho)
+
+	export.ExportParticleList("atoms.data", X = P, box = box)
+
+	# Modify the box to get only the particle box
+	req  = 1.5509
+	pbox = [	rho[0]-0.5*req,	rho[1]-0.5*req,	rho[2]-0.5*req,
+		 box[3]-rho[0]+0.5*req, box[4]-rho[1]+0.5*req, box[5]-rho[2]+0.5*req ]
+
+	# Compute the handshake geo
+	hs0 = [ pbox[0], pbox[1]	    , pbox[2], 
+		pbox[3], pbox[1]+opts.bdsize, pbox[5] ]
+	hs1 = [ pbox[0], pbox[4]-opts.bdsize, pbox[2], 
+		pbox[3], pbox[4]	    , pbox[5] ]
+
+	# Compute the other fe boxes
+	fe0 = [ hs0[0], hs0[1]-opts.fesize+opts.bdsize, hs0[2], 
+		hs0[3], hs0[1]			      , hs0[5] ]
+	fe1 = [ hs1[0], hs1[4]			      , hs1[2], 
+		hs1[3], hs1[4]+opts.fesize-opts.bdsize, hs1[5] ]
+
+	mesh     ("meshfile.xml", opts.h, [ fe0, hs0, fe1, hs1 ])
+	handshake("handshake.xml", [ hs0, hs1 ], [ [ 0., 0., 1., 1., 0., 0., 1., 1. ], [ 1., 1., 0., 0., 1., 1., 0., 0. ] ])
+	writebox ("box.xml", box)

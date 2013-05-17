@@ -1,0 +1,251 @@
+#!/usr/bin/env python
+
+import optparse
+import re
+
+# List of points
+points = []
+# List of polytopes
+polys  = []
+
+# A generic polytope
+class poly:
+  def __init__(self,n,cidx,type,fid, data = 0.):
+    self.ncorners = n
+    self.cidx     = cidx
+    self.vtktype  = type
+    self.fid      = fid
+    self.data     = data
+
+  def __getitem__(self,i):
+    return self.cidx[i]
+
+class quad(poly):
+    def __init__(self,cidx,fid,data):
+        poly.__init__(self,4,cidx, 9,fid,data)
+
+class point(poly):
+    def __init__(self,idx,fid,data):
+        poly.__init__(self,1,[idx], 1,fid,data)
+
+class triangle(poly):
+    def __init__(self,cidx,fid,data):
+        poly.__init__(self,3,cidx, 5,fid,data)
+
+class hex(poly):
+    def __init__(self,cidx,fid,data):
+        poly.__init__(self,8,cidx,12,fid,data)
+
+class line(poly):
+    def __init__(self,cidx,fid,data):
+        poly.__init__(self,2,cidx, 3,fid,data)
+
+class tetra(poly):
+    def __init__(self,cidx,fid,data):
+        poly.__init__(self,4,cidx,10,fid,data)
+
+def ParsePoint(string, parts, fid):
+	assert len(parts) in (4,5)
+
+	j = len(points)
+	if 4 == len(parts):
+		points.append([float(parts[1]),
+			       float(parts[2]),
+			       float(parts[3]),
+			       0.])
+		polys.append(point(j,fid,0.))
+	if 5 == len(parts):
+		points.append([float(parts[1]),
+			       float(parts[2]),
+			       float(parts[3]),
+			       float(parts[4])])
+                polys.append(point(j,fid,float(parts[4])))
+
+def ParseQuad(string, parts, fid):
+	assert 13 == len(parts) or 14 == len(parts)
+
+	j = len(points)
+	for i in (0,1,2,3):
+		points.append([float(parts[1 + 3*i]),
+			       float(parts[2 + 3*i]),
+                               float(parts[3 + 3*i]),
+			       0.])
+
+	if 14 == len(parts):
+		polys.append(quad([j,j+1,j+2,j+3],fid,parts[13]))
+	else:
+		polys.append(quad([j,j+1,j+2,j+3],fid,0.))
+
+def ParseTriangle(string, parts, fid):
+	assert len(parts) in (10,11)
+
+	j = len(points)
+	for i in (0,1,2):
+		points.append([float(parts[1 + 3*i]),
+			       float(parts[2 + 3*i]),
+                               float(parts[3 + 3*i]),
+			       0.])
+
+        if 11 == len(parts):
+		polys.append(triangle([j,j+1,j+2],fid,parts[10]))
+	else:
+		polys.append(triangle([j,j+1,j+2],fid,0.))
+
+def ParseHex(string, parts, fid):
+	assert len(parts) in (25,26)
+
+	j = len(points)
+	for i in (0,1,2,3,4,5,6,7):
+		points.append([float(parts[1 + 3*i]),
+			       float(parts[2 + 3*i]),
+		               float(parts[3 + 3*i]),
+			       0.])
+
+	if 26 == len(parts):
+		polys.append(hex([j,j+1,j+2,j+3,j+4,j+5,j+6,j+7],fid,parts[25]))
+	else:
+		polys.append(hex([j,j+1,j+2,j+3,j+4,j+5,j+6,j+7],fid,0.))
+
+def ParseLine(string, parts, fid):
+	assert len(parts) in (7,8)
+
+	j = len(points)
+	if 7 == len(parts):
+		for i in (0,1):
+			points.append([float(parts[1 + 3*i]),
+				       float(parts[2 + 3*i]),
+				       float(parts[3 + 3*i]),
+				       0.])
+		polys.append(line([j,j+1],fid,0.))
+	if 8 == len(parts):
+		for i in (0,1):
+			points.append([float(parts[1 + 3*i]),
+				       float(parts[2 + 3*i]),
+				       float(parts[3 + 3*i]),
+				       float(parts[7])])
+		polys.append(line([j,j+1],fid,parts[7]))
+
+def ParseTetra(string, parts, fid):
+	assert len(parts) in (13,14)
+
+	j = len(points)
+	for i in (0,1,2,3):
+		points.append([float(parts[1 + 3*i]),
+			       float(parts[2 + 3*i]),
+		               float(parts[3 + 3*i]),
+			       0.])
+
+	if 14 == len(parts):
+		polys.append(tetra([j,j+1,j+2,j+3],fid,parts[13]))
+	else:
+		polys.append(tetra([j,j+1,j+2,j+3],fid,0.))
+
+def ParseFile(file, fid):
+	for line in file:
+		line  = line.strip()
+		line  = re.sub('(\s|\t)+',' ',line)
+		parts = line.split(" ")
+
+		if parts[0] == "POINT":
+			ParsePoint(line, parts, fid)
+		if parts[0] == "QUAD":
+			ParseQuad(line, parts, fid)
+		if parts[0] == "TRIANGLE":
+			ParseTriangle(line, parts, fid)
+		if parts[0] == "HEX":
+			ParseHex(line, parts, fid)
+		if parts[0] == "LINE":
+			ParseLine(line, parts, fid)
+		if parts[0] == "TETRA":
+			ParseTetra(line, parts, fid)
+
+def WriteHeader(file):
+	file.write("# vtk DataFile Version 2.0\n")
+	file.write("\n")
+	file.write("ASCII\n")
+	file.write("DATASET UNSTRUCTURED_GRID\n")
+
+def Newline(file):
+	file.write("\n")
+
+def WritePoints(file):
+	file.write("POINTS %d double\n" % len(points))
+	for i in range(0,len(points)):
+		file.write("%16.15f\t%16.15f\t%16.15f\n" % (points[i][0],points[i][1],points[i][2]))
+
+def WriteCells(file):
+	s = 0
+	for i in range(0,len(polys)):
+		s = s + polys[i].ncorners + 1
+
+	file.write("CELLS %d %d\n" % (len(polys),s))
+	for i in range(0,len(polys)):
+		file.write("%d" % polys[i].ncorners)
+		for j in range(0,polys[i].ncorners):
+			file.write("\t%d" % polys[i][j])
+		Newline(file)
+
+def WriteCellTypes(file):
+	file.write("CELL_TYPES %d\n" % len(polys))
+	for i in range(0,len(polys)):
+		file.write("%d\n" % polys[i].vtktype)
+
+def WriteCellData(file):
+	file.write("CELL_DATA %d\n" % len(polys))
+	file.write("SCALARS fid double\n")
+	file.write("LOOKUP_TABLE default\n")
+	for i in range(0,len(polys)):
+		file.write("%f\n" % float(polys[i].data))
+
+def WriteNodeData(file):
+	file.write("SCALARS data double\n")
+	file.write("LOOKUP_TABLE default\n")
+	for i in range(0,len(polys)):
+		file.write("%f\n" % float(polys[i].data))
+
+	Newline(file)
+
+	file.write("POINT_DATA %d\n" % len(points))
+	file.write("SCALARS ndata double\n")
+	file.write("LOOKUP_TABLE default\n")
+	for i in range(0,len(points)):
+		file.write("%16.15f\n" % (points[i][3]))
+
+def WriteFile(file):
+	WriteHeader(file)
+	Newline(file)
+	WritePoints(file)
+	Newline(file)
+	WriteCells(file)
+	Newline(file)
+	WriteCellTypes(file)
+	Newline(file)
+	WriteCellData(file)
+	Newline(file)
+	WriteNodeData(file)
+	Newline(file)
+
+if __name__ == "__main__":
+	parser = optparse.OptionParser("usage: %prog [options] name")
+	parser.add_option("-o","--out",action="store",type="string",dest="out",
+		      help="output vtu file")
+	(opts,args) = parser.parse_args()
+
+	if 1 > len(args):
+		parser.error("undefined input file")
+	if None == opts.out:
+		if 1 < len(args):
+			parser.error("undefined output file")
+		else:
+			opts.out = re.sub('.pd','.vtk',args[0])
+			print " + using output file %s" % opts.out
+
+	for i in range(0,len(args)):
+		f = open(args[i],"r")
+		ParseFile(f,i)
+		f.close()
+
+	f = open(opts.out,"w")
+	WriteFile(f)
+	f.close()
+

@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+import optparse
+import sys
+import os
+import xml.dom.minidom
+import tempfile
+
+import particles
+import export
+
+# Write the md box
+def writebox(filename, box):
+	doc = xml.dom.minidom.Document()
+
+	b  = doc.createElement("box")
+	b.appendChild(doc.createTextNode("%f %f %f %f %f %f" % tuple(box)))
+	
+	doc.appendChild(b)
+
+	fh   = open(filename, "w")
+	doc.writexml(fh, "", "\t", "\n")
+	fh.close()
+
+# Choose atoms
+def choose(q, a, b, p):
+	if (p[0]-q[0])*(p[0]-q[0])/(a*a) + \
+	   (p[1]-q[1])*(p[1]-q[1])/(b*b) < 1:
+		return False
+	else:
+		return True
+
+if __name__ == "__main__":
+        parser = optparse.OptionParser("usage: %prog [options] name")
+        parser.add_option("--na",
+                          action  = "store",
+                          type    = "string",
+                          dest    = "na",
+                          help    = "approx. number of atoms in each direction")
+        parser.add_option("--rho",
+                          action  = "store",
+                          type    = "string",
+                          default = "0.280615512077343 0.486040324309916 5.0",
+                          dest    = "rho",
+                          help    = "offset for lattice")
+        parser.add_option("--a",
+                          action  = "store",
+                          type    = "float",
+                          dest    = "a",
+                          help    = "the norm of the first semi-principal axis of the crack")
+        parser.add_option("--b",
+                          action  = "store",
+                          type    = "float",
+                          dest    = "b",
+                          help    = "the norm of the second semi-principal axis of the crack")
+        (opts,args) = parser.parse_args()
+
+	stamp = ''
+	for v in sys.argv:
+		stamp = "%s %s" % (stamp,v)
+	fh = open("stamp","w")
+	fh.write(stamp + "\n")
+	fh.close()
+
+	rho = map(lambda v: float(v), opts.rho.strip().split(' '))
+	na  = map(lambda v:   int(v), opts.na.strip().split(' ') )
+
+	# Create the particle file and write out the box
+	P   = particles.CreateHex2ParticleList   (na, rho, lambda p: choose([ rho[0] + 0.396850262992049*na[0], rho[1] ],opts.a,opts.b,p))
+	box = particles.BoundingBoxOfParticleList(P , rho)
+
+	export.ExportParticleList("atoms.data", X = P, box = box)
+
+	writebox ("box.xml", box)
