@@ -1,0 +1,19 @@
+
+1d: One-dimensional MATLAB code
+
+The code can be used to for testing and
+development. Features include
+
+- Lennard-Jones potential
+- Cauch-Born material law
+- L2 and Least-Squares projection
+- Xiao-Belytschko BD method
+- Weak-coupling BD method
+- Multi-step Weak-coupling BD method
+
+To use the code you should
+
+a) run make in the md1 folder
+b) run setpath in the root folder of
+   1d.
+
