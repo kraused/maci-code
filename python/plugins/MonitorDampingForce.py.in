@@ -1,0 +1,13 @@
+
+import sys
+import pluginsS${DIM} as pluginsS
+
+
+# Wrapper around the PluginMonitorDampingForce class
+class MonitorDampingForce(pluginsS.MonitorDampingForce):
+
+	# Create a new instance
+	# @param[in] app	the Maci application instance
+	def __init__(self, app, **kwargs):
+		pluginsS.MonitorDampingForce.__init__(self, app, kwargs["outfile"]);
+

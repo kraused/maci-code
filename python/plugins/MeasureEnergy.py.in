@@ -1,0 +1,13 @@
+
+import sys
+import pluginsS${DIM} as pluginsS
+
+
+# Wrapper around the PluginMeasureEnergy class
+class MeasureEnergy(pluginsS.MeasureEnergy):
+
+	# Create a new instance
+	# @param[in] app	the Maci application instance
+	def __init__(self, app, **kwargs):
+		pluginsS.MeasureEnergy.__init__(self, app, kwargs["mask"], kwargs["outfile"]);
+
