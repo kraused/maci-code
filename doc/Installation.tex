@@ -34,6 +34,8 @@
 \hline
 \UMFPACK & \EXTSOFTREQNO & Direct Solver & Provides solver routines for the computation of Lagrange multipliers. This solver can only be used if each connected component of the handshake region is fully contained in the domain of a single processor.\\
 \hline
+\PVO  & \EXTSOFTREQYES & Parallel VTK Output & Required for visualization.\\
+\hline
 \UG & \EXTSOFTREQYES & FE code & Currently only the \UG code implements the interface to \MACI.\\
 \hline
 \LAMMPS & \EXTSOFTREQNO & MD code & Sandia's Open Source Molecular Dynamics Code. Very few changes to \LAMMPS are necessary to allow for linking it with the \MACI interface (see below).\\
@@ -70,6 +72,8 @@ The different \MACI components and dependencies can be retrieved as follows:
 \TRILINOS & \href{http://trilinos.sandia.gov}{http://trilinos.sandia.gov} & \TRILINOS is installed on many clusters and supercomputers.\\
 \hline
 \PETSC    & \href{http://www.mcs.anl.gov/petsc}{http://www.mcs.anl.gov/petsc} & \PETSC is installed on many clusters and supercomputers.\\
+\hline
+\PVO  & \href{https://github.com/kraused/pvo.git}{https://github.com/kraused/pvo.git} &\\
 \hline
 \UG \& \MSCOUPLING & - & The \MSCOUPLING package is a wrapper around the \UG datastructure which also implements linear elasticity and Cauchy-Born based elasticity. \MSCOUPLING is not compatible with the UG versions available from \href{http://atlas.gcsc.uni-frankfurt.de/~ug}{http://atlas.gcsc.uni-frankfurt.de/~ug/}.\\
 \hline
