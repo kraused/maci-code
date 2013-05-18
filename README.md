@@ -17,7 +17,7 @@ Please note that active developed of Maci was ceased in 2010.
 References
 ==========
 
-Please cite the following references when using MACI:
+Please cite the following references when using the software:
 
 * _Coupling Molecular Dynamics and Continua with Weak Constraints._
   Konstantin Fackeldey, Dorian Krause, Rolf Krause and Christoph Lenzen.
