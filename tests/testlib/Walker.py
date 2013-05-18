@@ -26,7 +26,7 @@ class Walker:
 	# Internal walker helper
 	def _walk(self, dummy, dirname, names):
 		# First of all we need to skip all these
-		# annoying svn folders that we do not really
+		# svn folders that we do not really
 		# care about
 		if -1 != dirname.find(".svn"):
 			return
