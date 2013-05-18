@@ -10,14 +10,14 @@ researchers.
 Since we cannot open-source certain required third-party libraries (in
 particular the finite element package UG), the code will not run out of the box. 
 However, interfacing Maci with a different finite element package should be
-possible with decent effort.
+possible with moderate effort.
 
 Please note that active developed of Maci was ceased in 2010.
 
 References
 ==========
 
-Please cite the following references when using MACI:
+Please cite the following references when using the software:
 
 * _Coupling Molecular Dynamics and Continua with Weak Constraints._
   Konstantin Fackeldey, Dorian Krause, Rolf Krause and Christoph Lenzen.
