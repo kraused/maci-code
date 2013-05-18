@@ -1,13 +1,11 @@
 
-The first version of \MACI has been developed together with a suite of unit tests. However, as the complexity of the code and the relations between classes increased (in retrospective one can argue that this was mainly caused by design flaws) unit testing was abandoned. Since then, \MACI was developed without automated testing.\newline
-
-Recently, we have added a suite of regression tests to \MACI. The execution of the tests is driven by a small \PYTHON library which is controlled by a set of input files in \JSON format. Each test is a \JSON object and information about the host and the environment are read in from additional \JSON files allowing us to test different build configurations. This testing library was designed particular for parallel code like \MACI and it assumes that the execution host runs a batch system. Testing results are gathered in a report and can be send via e-mail to a responsible person.\newline
+\MACI comes with a (small) regression test suite. The execution of the tests is driven by a small \PYTHON library which is controlled by a set of input files in \JSON format. Each test is a \JSON object and information about the host and the environment are read in from additional \JSON files allowing us to test different build configurations. This testing library was designed particular for parallel code like \MACI and it assumes that the execution host runs a batch system. Testing results are gathered in a report and can be send via e-mail to a responsible person.\newline
 
 Currently the test system is limited to detecting whether a run passes or fails during execution. The ability to check for correctness of output results will be added in future extensions of the system.\newline
 
 \subsection{Running the test suite}
 
-The regression tests are collected in the \lstinline[style=SHELL]|tests| folder in the \MACI trunk. The script \lstinline[style=SHELL]|testing.py| is responsible for execution of the tests:
+The regression tests are collected in the \lstinline[style=SHELL]|tests| folder in the \MACI repository. The script \lstinline[style=SHELL]|testing.py| is responsible for execution of the tests:
 
 \begin{lstlisting}[style=SHELL]
 ./testing.py example_env.json
@@ -104,7 +102,7 @@ Note that the definition of the \lstinline[style=SHELL]|sub| member of \lstinlin
 
 \subsection{Description of a test in \JSON}
 
-Tests are defined in \JSON files with the name \lstinline[style=SHELL]|tests.json|. In each file, multiple tests can be defined. Each test is it's own \JSON object:
+Tests are defined in \JSON files with the name \lstinline[style=SHELL]|tests.json|. In each file, multiple tests can be defined. Each test is its own \JSON object:
 
 \begin{lstlisting}[style=SHELL_SMALL,frame=lines]
 {

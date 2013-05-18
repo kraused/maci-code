@@ -1,7 +1,7 @@
 
-The core \PYTHON library of consists of a collection of \PYTHON classes, the behavior of which is completely determined by the \XML input file. As we have seen in the last section it is possible with \MACI to implement a solver for the multiscale DAE in only a few lines. A big portion of the complexity of the problem is hidden in the \CPP and \PYTHON core library, but another part can be found in the \XML specification files.\newline
+The core \PYTHON library of \MACI consists of a collection of \PYTHON classes, the behavior of which is completely determined by the \XML input file. As we have seen in the last section it is possible with \MACI to implement a solver for the multiscale DAE in only a few lines. A big portion of the complexity of the problem is hidden in the \CPP and \PYTHON core library, but another part can be found in the \XML specification files.\newline
 
-The rational forsplitting of the \MACI input into \PYTHON and \XML code is that, while \PYTHON is a good way to specify ``what to do', \XML is much better in specifying parameters for the execution. Unfortunately, it is not possible to draw a clear line between functionality provided on the \PYTHON level and in the \XML files. For example, while one might argue that the choice of the projection operator used to evaluate constraints should be done on the \PYTHON level, we consider this choice as a parameter for the e.g.~the \lstinline[style=PYTHON]|maci.RattleIntegrator|.\newline
+The rational for splitting of the \MACI input into \PYTHON and \XML code is that, while \PYTHON is a good way to specify ``what to do'', \XML is much better in specifying parameters for the execution. Unfortunately, it is not possible to draw a clear line between functionality provided on the \PYTHON level and in the \XML files. For example, while one might argue that the choice of the projection operator used to evaluate constraints should be done on the \PYTHON level, we consider this choice as a parameter for the e.g.~the \lstinline[style=PYTHON]|maci.RattleIntegrator|.\newline
 
 Each \MACI specfile begins with the \lstinline[style=XML]|<simulation>| node:
 
@@ -11,7 +11,8 @@ Each \MACI specfile begins with the \lstinline[style=XML]|<simulation>| node:
 </simulation>
 \end{lstlisting}
 
-The \lstinline[style=XML]|dim| attribute is mandatory. It is used by \MACI to determine which libraries to load at startup. In the next subsections we will go through the different child nodes of \lstinline[style=XML]|<simulation>| that must be defined by the user. Each node corresponds to a class in the \PYTHON core library of \MACI.\newline
+The \lstinline[style=XML]|dim| attribute is mandatory. It is used by \MACI to determine which libraries to load at startup. The scripts in the regression test suite are a good starting point to learn about the available \XML nodes.\newline
+%  In the next subsections we will go through the different child nodes of \lstinline[style=XML]|<simulation>| that must be defined by the user. Each node corresponds to a class in the \PYTHON core library of \MACI.\newline
 
 One important feature of the \XML parser in \MACI (which is based on the \lstinline[style=PYTHON]|xml.dom.minidom| \PYTHON module) is that \XML files are preprocessed. Since the \XML standard does not include the possibility to include other \XML files, this must be done prior to parsing the \XML content. The syntax for including other \XML files is taken from the \C preprocessor:
 

@@ -65,19 +65,17 @@ The different \MACI components and dependencies can be retrieved as follows:
 \hline
 \PYTHON   & \href{http://www.python.org}{http://www.python.org} & \PYTHON is installed on most Linux systems. \MACI has been used mainly with version 2.4.3.\\
 \hline
-\WMPI     & \href{https://github.com/kraused/maci-code.git}{https://github.com/kraused/maci-code.git} &\\
-\hline
 \SPBLAS     & \href{http://math.nist.gov/spblas}{http://math.nist.gov/spblas} & NIST provides an un-optimized reference implementation of Sparse-BLAS.\\
 \hline
 \TRILINOS & \href{http://trilinos.sandia.gov}{http://trilinos.sandia.gov} & \TRILINOS is installed on many clusters and supercomputers.\\
 \hline
 \PETSC    & \href{http://www.mcs.anl.gov/petsc}{http://www.mcs.anl.gov/petsc} & \PETSC is installed on many clusters and supercomputers.\\
 \hline
-\UG      & Upon request & The \MSCOUPLING package is a wrapper around the \UG datastructure which also implements linear elasticity and Cauchy-Born based elasticity. \MSCOUPLING is not compatible with the current trunk version of \UG.\\
+\UG \& \MSCOUPLING & - & The \MSCOUPLING package is a wrapper around the \UG datastructure which also implements linear elasticity and Cauchy-Born based elasticity. \MSCOUPLING is not compatible with the UG versions available from \href{http://atlas.gcsc.uni-frankfurt.de/~ug}{http://atlas.gcsc.uni-frankfurt.de/~ug/}.\\
 \hline
 \LAMMPS   & \href{http://lammps.sandia.gov}{http://lammps.sandia.gov} & Small modifications are necessary to use \LAMMPS with \MACI (see below).\\
 \hline
-\TREMOLO  & Upon request & The directory includes the modified \TREMOLO sources and the interface layer.\\
+\TREMOLO  & - & The directory includes the modified \TREMOLO sources and the interface layer.\newline A newer version of \TREMOLO is now sold by the Fraunhofer Institute for Algorithms and Scientific Computing (\href{http://www.tremolo-x.com}{http://www.tremolo-x.com}). \MACI will not run with this version.\\
 \hline
 \MACI     & \href{https://github.com/kraused/maci-code.git}{https://github.com/kraused/maci-code.git} &\\
 \end{supertabular}
@@ -228,7 +226,7 @@ Similarly, \lstinline[style=SHELL]|modify.cpp| must be modified:
 +
    else error->all("Invalid fix style");
  
-   // if fix is new, set it's mask values and increment nfix
+   // if fix is new, set its mask values and increment nfix
 \end{lstlisting}
 \item With these modifications it is possible to build \LAMMPS and link with \MACI. A patch for \LAMMPS can also be found in the \MACI code at \lstinline[style=SHELL]|md/lammps/src/lammps-XYZ.patch|. However, typically such a patch will not be valid for a different \LAMMPS version.
 \end{enumerate}
