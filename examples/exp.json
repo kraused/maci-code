@@ -1,0 +1,174 @@
+
+# vi: tabstop=4:expandtab
+
+# ================================================================================
+# SANDWICH2Y
+# ================================================================================
+{
+    # The name of the experiment. This must be a unique
+    # identifier
+    "name"     : "SANDWICH2Y_300x75_100_30_3.25.8",
+    # Input directory. The content of this directory is
+    # copied into the run directory
+    "input"    : "SANDWICH2Y/300x75_100_30_3.25",
+    # Input arguments for the executable
+    "args"     : [ "in.py", "specs.xml" ],
+    # Number of processing elements
+    "npes"     : 8,
+    # Number of threads per MPI process
+    "nthreads" : 1,
+    # Maximal walltime for the job
+    "wtime"    : "08:00:00"
+}
+
+{
+    "name"     : "SANDWICH2Y_300x75_100_30_3.25.16",
+    "input"    : "SANDWICH2Y/300x75_100_30_3.25",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 16,
+    "nthreads" : 1,
+    "wtime"    : "02:00:00"
+}
+
+{
+    "name"     : "SANDWICH2Y_600x150_200_30_3.25.16",
+    "input"    : "SANDWICH2Y/600x150_200_30_3.25",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 16,
+    "nthreads" : 1,
+    "wtime"    : "02:00:00"
+}
+
+{
+    "name"     : "SANDWICH2Y_600x150_200_30_3.25.8",
+    "input"    : "SANDWICH2Y/600x150_200_30_3.25",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 8,
+    "nthreads" : 1,
+    "wtime"    : "02:00:00"
+}
+
+{
+    "name"     : "SANDWICH2Y_600x150_200_30_3.25.2",
+    "input"    : "SANDWICH2Y/600x150_200_30_3.25",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 2,
+    "nthreads" : 1,
+    "wtime"    : "02:00:00"
+}
+
+{
+    "name"     : "SANDWICH2Y_600x150_200_60_3.25.16",
+    "input"    : "SANDWICH2Y/600x150_200_60_3.25",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 16,
+    "nthreads" : 1,
+    "wtime"    : "02:00:00"
+}
+
+# ================================================================================
+# STRETCH2D
+# ================================================================================
+
+{
+    "name"     : "STRETCH2D_400x150_130_3.25.16",
+    "input"    : "STRETCH2D/400x150_130_3.25",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 16,
+    "nthreads" : 1,
+    "wtime"    : "08:00:00"
+}
+
+# ================================================================================
+# Fracture experiment (with three different geometries)
+# ================================================================================
+
+{
+    "name"     : "CRACK_GEO1.16",
+    "input"    : "CRACK/GEO1",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 16,
+    "nthreads" : 1,
+    "wtime"    : "20:00:00"
+}
+
+{
+    "name"     : "CRACK_GEO2.16",
+    "input"    : "CRACK/GEO2",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 16,
+    "nthreads" : 1,
+    "wtime"    : "20:00:00"
+}
+
+{
+    "name"     : "CRACK_GEO3.16",
+    "input"    : "CRACK/GEO3",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 16,
+    "nthreads" : 1,
+    "wtime"    : "20:00:00"
+}
+
+# ================================================================================
+# Wave propagation test
+# ================================================================================
+
+{
+    "name"     : "SURROUND_BD30.32",
+    "input"    : "SURROUND/BD30",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 32,
+    "nthreads" : 1,
+    "wtime"    : "20:00:00"
+}
+
+{
+    "name"     : "SURROUND_BD60.32",
+    "input"    : "SURROUND/BD60",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 32,
+    "nthreads" : 1,
+    "wtime"    : "20:00:00"
+}
+
+# ================================================================================
+# Mode-I fracture test
+# ================================================================================
+
+{
+    "name"     : "MODEI.16",
+    "input"    : "MODEI",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 16,
+    "nthreads" : 1,
+    "wtime"    : "20:00:00"
+}
+
+{
+    "name"     : "MODEI.32",
+    "input"    : "MODEI",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 32,
+    "nthreads" : 1,
+    "wtime"    : "20:00:00"
+}
+
+{
+    "name"     : "MODEII.16",
+    "input"    : "MODEII",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 16,
+    "nthreads" : 1,
+    "wtime"    : "20:00:00"
+}
+
+{
+    "name"     : "MODEII.32",
+    "input"    : "MODEII",
+    "args"     : [ "in.py", "specs.xml" ],
+    "npes"     : 32,
+    "nthreads" : 1,
+    "wtime"    : "20:00:00"
+}
+

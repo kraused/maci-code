@@ -1,0 +1,1 @@
+ /home/user/build/lammps/ug/spblas/release/maci/share/maci/sandwich2Y --na 600 150 --fesize 200 --bdsize 30 --rho 20 20 5 --meshsize 3.25

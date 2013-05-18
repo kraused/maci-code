@@ -1,0 +1,25 @@
+
+# vi: tabstop=4
+
+{
+	# Host description
+	"type" : "host",
+
+	# The identifier for the host
+	"host" : "cub.inf.usi.ch",
+
+	# The batch system on the host
+	"batch" :
+	{
+		"type" : "pbs",
+
+		# Restrictions on the allowed number of cores to use
+		"restr" : [ "!%nthreads >= 1!", "!%npes >= 1!", "!%npes*%nthreads <= 42*8!", "!%nthreads <= 8!" ],
+
+		# Define the executable interface
+		"sub"  : "qsub -lnodes=!max(1,math.ceil(float(%npes*%nthreads)/8))!:ppn=!min(%npes,math.ceil(8/float(%nthreads)))!,vmem=!2*min(%npes*%nthreads,8)!gb,pvmem=!2*%nthreads!gb,walltime=%wtime -joe -mae -M %user -N %name %script",
+		"del"  : "qdel  %jobid",
+		"stat" : "qstat %jobid"
+	}
+}
+

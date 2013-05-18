@@ -1,0 +1,38 @@
+
+# vi: tabstop=4
+
+{
+	# The type
+	"type" : "app",
+
+	# The host configuration
+	"host" : "cub.json",
+
+	# The mail address of the responsible person
+	"user" : "user@domain",
+
+	# The executable
+	"exe" : "/home/user/build/tremolo/ug/oski/release/maci/bin/maci",
+
+	# The MPI infos
+	"mpi" :
+	{
+		# How to create the hostfile. This is not so complicated as it looks:
+		# we first remove duplicated lines from the nodefile and then later 
+		# duplicate them. We assume that one always 
+		"nodes" : "cat $PBS_NODEFILE | sort | uniq | xargs perl -e 'foreach (@ARGV) { print \"$_\n\"x!8/%nthreads!; }' > %nodes",
+
+		# How to spawn the MPI processes
+		"cmd"   : "mpiexec -np %npes -hostfile %nodes -x OMP_NUM_THREADS=%nthreads %exe %args"
+	},
+
+	# The output folder template. In general you want this to be dependent on the time. The
+	# submitter will make sure that the name is unique by appending something at the end if
+	# necessary. %name is replaced by the experiment name
+	"output" : "/home/user/maci/%name-%a-%b-%y-%H-%M-%S",
+
+	# The list of modules that should be loaded before running the executable
+	"modules" : [ "trilinos", "tau", "oski" ]
+
+}
+

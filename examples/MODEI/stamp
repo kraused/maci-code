@@ -1,0 +1,1 @@
+ /home/user/build//lammps/ug/csr/debug/maci/share/maci/crack2X --na=293 493 --rho=100 50 5 --a 5 --b 200 --bdsize 30 --fesize 260 --meshsize 3.5

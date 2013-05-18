@@ -1,0 +1,178 @@
+<simulation dim = "2">
+
+	<mmsystem>
+		<lammps>
+			<datafile>
+				atoms-lammps.data
+			</datafile>
+
+			<pair>
+				<type>  lj  </type>
+				<skin>  0.3 </skin>
+				<rcut>  1.5 </rcut>
+				<eps>   1.0 </eps>
+				<sigma> 1.0 </sigma>
+			</pair>
+		</lammps>
+
+                <tremolo>
+                        <datafile>
+                                atoms-tremolo.data
+                        </datafile>
+
+                        #include "box.xml"
+
+                        <pair>
+                                <type>  ljw  </type>
+                                <rcut>  1.5 </rcut>
+                                <eps>   1.0 </eps>
+                                <sigma> 1.0 </sigma>
+                        </pair>
+
+                        <extforces>
+                        </extforces>
+		</tremolo>
+
+		<initcondsu>
+			RadialWave(x,y,z, A = 0.15, sigma = 15, b = 0.1)
+		</initcondsu>
+		<initcondsv>
+			[ 0.0, 0.0, 0.0 ]
+		</initcondsv>
+	</mmsystem>
+
+	<fesolver>
+		<ug>
+			#include "cb2.xml"
+
+			<rho>
+				0.916486424665735
+			</rho>
+
+			#include "meshfile.xml"
+
+			<loadbal>
+				<strategy> 0 </strategy>
+			</loadbal>
+
+			<vectors>
+				<vector>
+					<ncomps> 1 </ncomps>
+					<num> 7 </num>
+					<dof> node </dof>
+				</vector>
+				<vector>
+					<ncomps> 3 </ncomps>
+					<num> 7 </num>
+					<dof> node </dof>
+				</vector>
+				<vector>
+					<ncomps> 9 </ncomps>
+					<num> 1 </num>
+					<dof> element </dof>
+				</vector>
+			</vectors>
+		</ug>
+
+		<initcondsu>
+			[ 0.0, 0.0, 0.0 ]
+		</initcondsu>
+		<initcondsv>
+			[ 0.0, 0.0, 0.0 ]
+		</initcondsv>
+	</fesolver>
+
+	<!-- The file "handshake.xml" contains the definition of the
+	handshake geometry (as a collection of geometric primitives)
+	and the boundary values for the weighting function (which is
+	extended to the interior via interpolation -->
+	#include "handshake.xml"
+
+	<!-- Parameters for the (single-step) RATTLE integrator for the DAE -->
+	<rattle>
+		<!-- Number of steps to perform -->
+		<nsteps> 10000 </nsteps>
+		<!-- Timestep size -->
+		<tau> 0.005 </tau>
+
+		<!-- In the <damping> element, the parameters for the PML
+		damping for high-frequent parts in the handshake region
+		are defined -->
+		<damping>
+			<type> frictionff </type>
+			<!-- With the <constant> element the strength of the damping
+			can be controlled by multiplying a constant value to the quadratic
+			damping function. Here we use the value -log(0.35)*1.5 (found
+			in the literature for PML dampings) -->
+			<constant> 1.57473318675 </constant>
+			<!-- In this section we define how to filter the high-frequent
+			part out of the displacement field -->
+			<filter>
+				<!-- We support L2-based (l2) or Least-squares (ls) based filtering
+				(these are the projections implemented in MACI) -->
+				<type> ls </type>
+			</filter>
+		</damping>
+	
+		<!-- In this section we specify the parameters for the coupling of MD and
+		FE displacement and velocity fields -->
+		<corrector>
+			<!-- Define the projection P used in evaluating constraints g = U - P*u = 0
+			L2 and Least-Squares projection are implemented -->
+			<projection>
+				<type> ls </type>
+			</projection>
+	
+			<!-- In this section we define solver for the linear system -->
+			<solver>
+				<!-- currently trilinos, petsc and umfpack can be
+				supported depending on the configuration. Note that UMFPACK
+				assumes that each connected component of the handshake region
+				is located on a single processing element -->
+				<type> trilinos </type>
+				<maxiter> 50 </maxiter>
+				<tol> 1e-9 </tol>
+			</solver>
+		</corrector>
+
+                <plugintable>
+                        <plugin pes = "md">
+                                plugins.Visualize(app, mask = 50, prefix = "vis-md")
+                        </plugin>
+                        <plugin pes = "md">
+                                plugins.MonitorResidual(app, outfile = "-")
+                        </plugin>
+                        <plugin pes = "md">
+                                plugins.MonitorDampingForce(app, outfile = "-")
+                        </plugin>
+                        <plugin pes = "md">
+                                plugins.MeasureEnergy(app, mask = 10, outfile = "energy-md.dat")
+                        </plugin>
+                        <plugin pes = "fe">
+                                plugins.Visualize(app, mask = 50, prefix = "vis-fe")
+                        </plugin>
+                        <plugin pes = "fe">
+                                plugins.MonitorResidual(app, outfile = "-")
+                        </plugin>
+                        <plugin pes = "fe">
+                                plugins.MeasureEnergy(app, mask = 10, outfile = "energy-fe.dat")
+                        </plugin>
+                </plugintable>
+	</rattle>
+
+	<procel>
+		<split>
+			<npes> T </npes>
+			<md> range(0,T/2) </md>
+			<fe> range(T/2,T) </fe>
+		</split>
+
+		<split>
+			<npes> 32 </npes>
+			<md> range(0,31) </md>
+			<fe> [ 31 ] </fe>
+		</split>
+	</procel>
+
+</simulation>
+

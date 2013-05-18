@@ -1,0 +1,24 @@
+<handshake dim="2">
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			99.438769 49.438769 0.000000 416.534298 79.438769 0.000000
+		</patch>
+		<vals>
+			0.000000 0.000000 1.000000 1.000000
+		</vals>
+	</primitive>
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			99.438769 225.670248 0.000000 416.534298 255.670248 0.000000
+		</patch>
+		<vals>
+			1.000000 1.000000 0.000000 0.000000
+		</vals>
+	</primitive>
+</handshake>

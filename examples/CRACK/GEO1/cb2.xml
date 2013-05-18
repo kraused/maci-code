@@ -1,0 +1,16 @@
+
+<!-- Define the constitutive equation
+to use in our simulation -->
+<constitutiveeq>
+	<type> cb </type>
+	<sigma> 1.0 </sigma>
+	<eps> 1.0 </eps>
+	<rcut> 2.5 </rcut>
+</constitutiveeq>
+
+<!-- The quadrature order should be defined
+together with the constitutive equation because
+in general it will need to be chosen carefully
+in order not to introduce spurious effects -->
+<qorder> 1 </qorder>
+

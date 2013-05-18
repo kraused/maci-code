@@ -1,0 +1,90 @@
+<handshake dim="2">
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			19.438769 19.438769 0.000000 79.438769 79.438769 0.000000
+		</patch>
+		<vals>
+			0.010000 0.010000 1.000000 0.010000
+		</vals>
+	</primitive>
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			79.438769 19.438769 0.000000 435.923908 79.438769 0.000000
+		</patch>
+		<vals>
+			0.010000 0.010000 1.000000 1.000000
+		</vals>
+	</primitive>
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			435.923908 19.438769 0.000000 495.923908 79.438769 0.000000
+		</patch>
+		<vals>
+			0.010000 0.010000 0.010000 1.000000
+		</vals>
+	</primitive>
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			435.923908 79.438769 0.000000 495.923908 439.796991 0.000000
+		</patch>
+		<vals>
+			1.000000 0.010000 0.010000 1.000000
+		</vals>
+	</primitive>
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			435.923908 439.796991 0.000000 495.923908 499.796991 0.000000
+		</patch>
+		<vals>
+			1.000000 0.010000 0.010000 0.010000
+		</vals>
+	</primitive>
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			79.438769 439.796991 0.000000 435.923908 499.796991 0.000000
+		</patch>
+		<vals>
+			1.000000 1.000000 0.010000 0.010000
+		</vals>
+	</primitive>
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			19.438769 439.796991 0.000000 79.438769 499.796991 0.000000
+		</patch>
+		<vals>
+			0.010000 1.000000 0.010000 0.010000
+		</vals>
+	</primitive>
+	<primitive>
+		<type>
+			cuboid
+		</type>
+		<patch>
+			19.438769 79.438769 0.000000 79.438769 439.796991 0.000000
+		</patch>
+		<vals>
+			0.010000 1.000000 1.000000 0.010000
+		</vals>
+	</primitive>
+</handshake>
