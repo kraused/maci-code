@@ -17,8 +17,6 @@
  * -------------------------------------------------------------------------- */
 #cmakedefine HAVE_UG			1
 #cmakedefine HAVE_TREMOLO		1
-#cmakedefine HAVE_GROMACS		1
-#cmakedefine HAVE_MDGPGPU		1
 #cmakedefine HAVE_LAMMPS		1
 
 /* -----------------------------------------------------------------------------

@@ -37,7 +37,7 @@ SET(LIBS2 "hash;pu;tree")
 SET(LIBS3 "hash;pu;tree")
 
 # Check for the various TLPs supported by the code
-FOREACH(TPLNAME GA Spblas OSKI Trilinos PETSc UMFPACK TAU PVO UG Tremolo MDGPGPU Lammps wmpi mexico)
+FOREACH(TPLNAME GA Spblas OSKI Trilinos PETSc UMFPACK TAU PVO UG Tremolo Lammps wmpi mexico)
 	INCLUDE(MACI_TPL_${TPLNAME})
 ENDFOREACH()
 

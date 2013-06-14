@@ -8,10 +8,6 @@ IF(HAVE_TREMOLO)
 	INSTALL(FILES		tremolo/export.py
             DESTINATION	share/maci)
 ENDIF()
-IF(HAVE_MDGPGPU)
-	INSTALL(FILES		mdgpgpu/export.py
-            DESTINATION	share/maci)
-ENDIF()
 IF(HAVE_LAMMPS)
 	INSTALL(FILES 		lammps/export.py
             DESTINATION	share/maci)
